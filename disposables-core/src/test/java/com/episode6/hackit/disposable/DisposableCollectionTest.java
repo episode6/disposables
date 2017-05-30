@@ -39,6 +39,14 @@ public class DisposableCollectionTest {
     verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1);
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void testThrowsWhenAddAfterDispose() {
+    DisposableCollection collection = createWith(mDisposable1);
+
+    collection.dispose();
+    collection.addDisposable(mCheckedDisposable2);
+  }
+
   @Test
   public void testSimpleFlushNotDisposed() {
     DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1);

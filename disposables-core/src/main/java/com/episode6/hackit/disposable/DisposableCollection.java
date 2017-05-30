@@ -2,7 +2,7 @@ package com.episode6.hackit.disposable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Iterator;
 
 /**
  * A collection of {@link Disposable}s that implements {@link HasDisposables} and {@link Disposable}
@@ -10,6 +10,7 @@ import java.util.LinkedList;
 public class DisposableCollection implements HasDisposables, Disposable {
 
   private final Collection<Disposable> mDisposables = new ArrayList<>();
+  private transient volatile boolean mIsDisposed = false;
 
   /**
    * {@inheritDoc}
@@ -17,6 +18,11 @@ public class DisposableCollection implements HasDisposables, Disposable {
   @Override
   public <T extends Disposable> T addDisposable(T disposable) {
     synchronized (this) {
+      if (mIsDisposed) {
+        throw new IllegalStateException(
+            "Tried to add a disposable to a DisposableCollection after collection has" +
+                " already been disposed. Disposable added: " + disposable.toString());
+      }
       mDisposables.add(disposable);
     }
     return disposable;
@@ -27,26 +33,25 @@ public class DisposableCollection implements HasDisposables, Disposable {
    */
   @Override
   public void flushDisposed() {
-    Collection<Disposable> disposables;
-    synchronized (this)  {
-      disposables = new ArrayList<>(mDisposables);
-    }
-
-    Collection<CheckedDisposable> alreadyDisposed = new LinkedList<>();
-    for (Disposable d : disposables) {
-      if (d instanceof CheckedDisposable && ((CheckedDisposable) d).isDisposed()) {
-        alreadyDisposed.add((CheckedDisposable) d);
-      } else if (d instanceof HasDisposables) {
-        ((HasDisposables) d).flushDisposed();
-      }
-    }
-
-    if (alreadyDisposed.isEmpty()) {
+    if (mIsDisposed) {
       return;
     }
 
-    synchronized (this) {
-      mDisposables.removeAll(alreadyDisposed);
+    synchronized (this)  {
+      if (mIsDisposed) {
+        return;
+      }
+
+      for (Iterator<Disposable> iterator = mDisposables.iterator(); iterator.hasNext();) {
+        Disposable disposable = iterator.next();
+        if (disposable instanceof HasDisposables) {
+          ((HasDisposables) disposable).flushDisposed();
+          continue;
+        }
+        if (disposable instanceof CheckedDisposable && ((CheckedDisposable) disposable).isDisposed()) {
+          iterator.remove();
+        }
+      }
     }
   }
 
@@ -55,8 +60,17 @@ public class DisposableCollection implements HasDisposables, Disposable {
    */
   @Override
   public void dispose() {
+    if (mIsDisposed) {
+      return;
+    }
+
     Collection<Disposable> disposables;
     synchronized (this)  {
+      if (mIsDisposed) {
+        return;
+      }
+      mIsDisposed = true;
+
       disposables = new ArrayList<>(mDisposables);
       mDisposables.clear();
     }
