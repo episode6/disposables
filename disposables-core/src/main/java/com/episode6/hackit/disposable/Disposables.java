@@ -43,6 +43,13 @@ public class Disposables {
             disposeChecker));
   }
 
+  public static DisposableRunnable createRunnable(Runnable runnable) {
+    if (runnable instanceof DisposableRunnable) {
+      return (DisposableRunnable) runnable;
+    }
+    return new DelegateDisposableRunnable(runnable);
+  }
+
   @SuppressWarnings("unchecked")
   private static <T> Disposer<T> maybeWrapDisposer(T instance, Disposer<T> disposer) {
     if (instance instanceof Disposable && !(disposer instanceof DisposableDisposer)) {
@@ -164,6 +171,22 @@ public class Disposables {
         return mDelegateDisposeChecker.isInstanceDisposed(instance) && instance.isDisposed();
       }
       return instance.isDisposed();
+    }
+  }
+
+  private static class DelegateDisposableRunnable extends DelegateCheckedDisposable<Runnable> implements DisposableRunnable {
+
+    public DelegateDisposableRunnable(Runnable delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void run() {
+      final Runnable delegate = markDisposed();
+      if (delegate != null) {
+        delegate.run();
+        disposeObjectIfNeeded(delegate);
+      }
     }
   }
 }

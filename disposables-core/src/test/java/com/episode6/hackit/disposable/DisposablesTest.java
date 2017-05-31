@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -46,8 +47,12 @@ public class DisposablesTest {
     }
   }
 
+  interface RunnableWithDispose extends CheckedDisposable, Runnable {}
+
   @Mock ObjWithCleanup mObjWithCleanup;
   @Mock WeakReference<ObjWithCleanup> mWeakReference;
+  @Mock Runnable mRunnable;
+  @Mock RunnableWithDispose mRunnableWithDispose;
 
   @Before
   public void setup() throws Exception {
@@ -206,5 +211,66 @@ public class DisposablesTest {
 
     verify(mWeakReference).get();
     verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+  }
+
+  @Test
+  public void testRunnableDispose() {
+    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnable);
+
+    disposableRunnable.dispose();
+    disposableRunnable.run();
+    disposableRunnable.run();
+    disposableRunnable.run();
+
+    verifyNoMoreInteractions(mRunnable);
+  }
+
+  @Test
+  public void testRunnableRun() {
+    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnable);
+
+    disposableRunnable.run();
+    disposableRunnable.run();
+    disposableRunnable.run();
+
+    verify(mRunnable).run();
+    verifyNoMoreInteractions(mRunnable);
+  }
+
+  @Test
+  public void testDisposableRunnableDispose() {
+    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+
+    disposableRunnable.dispose();
+    disposableRunnable.run();
+    disposableRunnable.run();
+    disposableRunnable.run();
+
+    verify(mRunnableWithDispose).dispose();
+    verifyNoMoreInteractions(mRunnableWithDispose);
+  }
+
+  @Test
+  public void testDisposableRunnableRun() {
+    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+
+    disposableRunnable.run();
+    disposableRunnable.run();
+    disposableRunnable.run();
+
+    InOrder inOrder = inOrder(mRunnableWithDispose);
+    inOrder.verify(mRunnableWithDispose).run();
+    inOrder.verify(mRunnableWithDispose).dispose();
+    verifyNoMoreInteractions(mRunnableWithDispose);
+  }
+
+  @Test
+  public void testDisposableRunnableCheck() {
+    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+
+    disposableRunnable.isDisposed();
+
+    verify(mRunnableWithDispose).isDisposed();
+    verifyNoMoreInteractions(mRunnableWithDispose);
   }
 }
