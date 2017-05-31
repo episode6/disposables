@@ -2,12 +2,19 @@ package com.episode6.hackit.disposable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
  * A collection of {@link Disposable}s that implements {@link HasDisposables} and {@link Disposable}
  */
 public class DisposableCollection implements HasDisposables, Disposable {
+
+  public static DisposableCollection createWith(Disposable... disposables) {
+    DisposableCollection collection = new DisposableCollection();
+    Collections.addAll(collection.mDisposables, disposables);
+    return collection;
+  }
 
   private final Collection<Disposable> mDisposables = new ArrayList<>();
   private transient volatile boolean mIsDisposed = false;

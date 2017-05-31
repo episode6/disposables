@@ -6,6 +6,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static com.episode6.hackit.disposable.DisposableCollection.createWith;
 import static org.mockito.Mockito.*;
 
 /**
@@ -19,14 +20,6 @@ public class DisposableCollectionTest {
   @Mock CheckedDisposable mCheckedDisposable1;
   @Mock Disposable mDisposable2;
   @Mock CheckedDisposable mCheckedDisposable2;
-
-  private static DisposableCollection createWith(Disposable... disposables) {
-    DisposableCollection collection = new DisposableCollection();
-    for (Disposable d : disposables) {
-      collection.addDisposable(d);
-    }
-    return collection;
-  }
 
   @Test
   public void testSimpleDispose() {
