@@ -14,12 +14,12 @@ import java.lang.ref.WeakReference;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 /**
  * Tests {@link Disposables}
  */
-@PrepareForTest({WeakRefProvider.class})
+@PrepareForTest({Disposables.class}) // creates weak refs
 @RunWith(PowerMockRunner.class)
 public class DisposablesTest {
 
@@ -50,9 +50,8 @@ public class DisposablesTest {
   @Mock WeakReference<ObjWithCleanup> mWeakReference;
 
   @Before
-  public void setup() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
+  public void setup() throws Exception {
+    whenNew(WeakReference.class).withArguments(mObjWithCleanup).thenReturn(mWeakReference);
   }
 
   @Test

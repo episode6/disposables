@@ -25,7 +25,7 @@ public class Disposables {
 
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
     return create(
-        WeakRefProvider.create(instance),
+        new WeakReference<T>(instance),
         new WeakDisposer<T>(maybeWrapDisposer(instance, disposer)),
         new WeakDisposeChecker<T>(maybeWrapDisposeChecker(instance, disposeChecker)));
   }
