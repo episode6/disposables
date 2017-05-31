@@ -8,26 +8,39 @@ import java.lang.ref.WeakReference;
  */
 public class Disposables {
 
-  public static <T> CheckedDisposable create(T instance, Disposer<T> disposer) {
-    return create(instance, disposer, null);
+  @SuppressWarnings("unchecked")
+  public static <T> Disposable create(T instance, Disposer<T> disposer) {
+    if (instance instanceof CheckedDisposable) {
+      return createChecked(instance, disposer, new CheckedDisposableChecker(null));
+    }
+    return new DelegateDisposable<>(
+        new DisposableComponents<T>(
+            instance,
+            maybeWrapDisposer(instance, disposer)));
   }
 
-  public static <T> CheckedDisposable create(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
-    return new DelegateCheckedDisposable<T>(
-        instance,
-        maybeWrapDisposer(instance, disposer),
-        maybeWrapDisposeChecker(instance, disposeChecker));
+  public static <T> CheckedDisposable createChecked(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
+    return new DelegateCheckedDisposable<>(
+        new CheckedDisposableComponents<T>(
+            instance,
+            maybeWrapDisposer(instance, disposer),
+            maybeWrapDisposeChecker(instance, disposeChecker)));
   }
 
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer) {
-    return createWeak(instance, disposer, null);
+    return new DelegateCheckedDisposable<>(
+        new CheckedDisposableComponents<WeakReference<T>>(
+            new WeakReference<T>(instance),
+            new WeakDisposer<T>(maybeWrapDisposer(instance, disposer)),
+            new WeakDisposeChecker<T>(null)));
   }
 
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
-    return create(
-        new WeakReference<T>(instance),
-        new WeakDisposer<T>(maybeWrapDisposer(instance, disposer)),
-        new WeakDisposeChecker<T>(maybeWrapDisposeChecker(instance, disposeChecker)));
+    return new DelegateCheckedDisposable<>(
+        new CheckedDisposableComponents<WeakReference<T>>(
+            new WeakReference<T>(instance),
+            new WeakDisposer<T>(maybeWrapDisposer(instance, disposer)),
+            new WeakDisposeChecker<T>(maybeWrapDisposeChecker(instance, disposeChecker))));
   }
 
   @SuppressWarnings("unchecked")
@@ -39,74 +52,52 @@ public class Disposables {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> DisposeChecker<T> maybeWrapDisposeChecker(T instance, DisposeChecker<T> disposeChecker) {
+  private static <T> DisposeChecker<T> maybeWrapDisposeChecker(T instance, @Nullable DisposeChecker<T> disposeChecker) {
     if (instance instanceof CheckedDisposable && !(disposeChecker instanceof CheckedDisposableChecker)) {
       return new CheckedDisposableChecker(disposeChecker);
     }
     return disposeChecker;
   }
 
-  private static class DelegateCheckedDisposable<V> implements CheckedDisposable {
-    transient volatile boolean mIsDisposed;
-    @Nullable V mInstance;
-    @Nullable Disposer<V> mDisposer;
-    @Nullable DisposeChecker<V> mDisposeChecker;
+  private static class DisposableComponents<V> implements Disposable {
+    final V instance;
+    final Disposer<V> disposer;
 
-    DelegateCheckedDisposable(V instance, Disposer<V> disposer, @Nullable DisposeChecker<V> disposeChecker) {
-      mIsDisposed = false;
-      mInstance = instance;
-      mDisposer = disposer;
-      mDisposeChecker = disposeChecker;
-    }
-
-    @Override
-    public boolean isDisposed() {
-      if (mIsDisposed) {
-        return true;
-      }
-
-      V instance;
-      DisposeChecker<V> disposeChecker;
-      synchronized (this) {
-        if (mIsDisposed) {
-          return true;
-        }
-        instance = mInstance;
-        disposeChecker = mDisposeChecker;
-      }
-      return instance == null || (disposeChecker != null && disposeChecker.isInstanceDisposed(instance));
+    DisposableComponents(
+        V instance,
+        Disposer<V> disposer) {
+      this.instance = instance;
+      this.disposer = disposer;
     }
 
     @Override
     public void dispose() {
-      if (mIsDisposed) {
-        return;
-      }
-
-      V instance;
-      Disposer<V> disposer;
-      DisposeChecker<V> disposeChecker;
-      synchronized (this) {
-        if (mIsDisposed) {
-          return;
-        }
-        mIsDisposed = true;
-
-        instance = mInstance;
-        disposer = mDisposer;
-        disposeChecker = mDisposeChecker;
-        mInstance = null;
-        mDisposer = null;
-        mDisposeChecker = null;
-      }
-
-      if (instance == null ||
-          disposer == null ||
-          (disposeChecker != null && disposeChecker.isInstanceDisposed(instance))) {
-        return;
-      }
-
       disposer.disposeInstance(instance);
+    }
+  }
+
+  private static class CheckedDisposableComponents<V> extends DisposableComponents<V> implements CheckedDisposable {
+    final DisposeChecker<V> disposeChecker;
+
+    CheckedDisposableComponents(
+        V instance,
+        Disposer<V> disposer,
+        DisposeChecker<V> disposeChecker) {
+      super(instance, disposer);
+      this.disposeChecker = disposeChecker;
+    }
+
+    @Override
+    public void dispose() {
+      if (isDisposed()) {
+        return;
+      }
+      super.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return disposeChecker.isInstanceDisposed(instance);
     }
   }
 
@@ -144,17 +135,15 @@ public class Disposables {
 
   private static class DisposableDisposer<V extends Disposable> implements Disposer<V> {
 
-    final @Nullable Disposer<V> mDelegateDisposer;
+    final Disposer<V> mDelegateDisposer;
 
-    private DisposableDisposer(@Nullable Disposer<V> delegateDisposer) {
+    private DisposableDisposer(Disposer<V> delegateDisposer) {
       mDelegateDisposer = delegateDisposer;
     }
 
     @Override
     public void disposeInstance(V instance) {
-      if (mDelegateDisposer != null) {
-        mDelegateDisposer.disposeInstance(instance);
-      }
+      mDelegateDisposer.disposeInstance(instance);
       instance.dispose();
     }
   }

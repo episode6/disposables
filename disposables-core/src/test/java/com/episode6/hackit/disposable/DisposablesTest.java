@@ -56,7 +56,7 @@ public class DisposablesTest {
 
   @Test
   public void testSimpleDisposable() {
-    CheckedDisposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
+    Disposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
 
     disposable.dispose();
 
@@ -67,7 +67,7 @@ public class DisposablesTest {
   @Test
   public void testDisposalCheck() {
     when(mObjWithCleanup.isCleanedUp()).thenReturn(true);
-    CheckedDisposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
     boolean isDisposed = disposable.isDisposed();
 
@@ -79,7 +79,7 @@ public class DisposablesTest {
   @Test
   public void testDisposalCheckOnDisposeWhenAlreadyDisposed() {
     when(mObjWithCleanup.isCleanedUp()).thenReturn(true);
-    CheckedDisposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
     disposable.dispose();
 
@@ -90,7 +90,7 @@ public class DisposablesTest {
   @Test
   public void testDisposalCheckOnDisposeWhenNotDisposed() {
     when(mObjWithCleanup.isCleanedUp()).thenReturn(false);
-    CheckedDisposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
     disposable.dispose();
 
@@ -102,10 +102,10 @@ public class DisposablesTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testDisposableOfDisposable() {
-    CheckedDisposable firstDisposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
+    Disposable firstDisposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
 
     Disposer secondDisposer = mock(Disposer.class);
-    CheckedDisposable secondDisposable = Disposables.create(firstDisposable, secondDisposer);
+    Disposable secondDisposable = Disposables.create(firstDisposable, secondDisposer);
 
     secondDisposable.dispose();
     verify(secondDisposer).disposeInstance(firstDisposable);
