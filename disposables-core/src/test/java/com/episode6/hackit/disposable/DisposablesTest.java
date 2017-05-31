@@ -1,5 +1,6 @@
 package com.episode6.hackit.disposable;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +48,12 @@ public class DisposablesTest {
 
   @Mock ObjWithCleanup mObjWithCleanup;
   @Mock WeakReference<ObjWithCleanup> mWeakReference;
+
+  @Before
+  public void setup() {
+    mockStatic(WeakRefProvider.class);
+    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
+  }
 
   @Test
   public void testSimpleDisposable() {
@@ -110,8 +117,6 @@ public class DisposablesTest {
 
   @Test
   public void testWeakDisposableNoRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
 
     boolean isDisposed = disposable.isDisposed();
@@ -121,8 +126,6 @@ public class DisposablesTest {
 
   @Test
   public void testWeakDisposableWithRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     when(mWeakReference.get()).thenReturn(mObjWithCleanup);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
 
@@ -133,8 +136,6 @@ public class DisposablesTest {
 
   @Test
   public void testDisposalOfWeakDisposableWithRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     when(mWeakReference.get()).thenReturn(mObjWithCleanup);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
 
@@ -146,8 +147,6 @@ public class DisposablesTest {
 
   @Test
   public void testDisposalOfWeakDisposableWNoRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
 
     disposable.dispose();
@@ -157,8 +156,6 @@ public class DisposablesTest {
 
   @Test
   public void testWeakCheckedDisposableNoRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
     boolean isDisposed = disposable.isDisposed();
@@ -169,8 +166,6 @@ public class DisposablesTest {
 
   @Test
   public void testWeakCheckedDisposableWithRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     when(mWeakReference.get()).thenReturn(mObjWithCleanup);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
@@ -183,8 +178,6 @@ public class DisposablesTest {
 
   @Test
   public void testDisposalOfWeakCheckdDisposableWithRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     when(mWeakReference.get()).thenReturn(mObjWithCleanup);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
@@ -197,8 +190,6 @@ public class DisposablesTest {
 
   @Test
   public void testDisposalOfWeakCheckedDisposableWNoRef() {
-    mockStatic(WeakRefProvider.class);
-    when(WeakRefProvider.create(mObjWithCleanup)).thenReturn(mWeakReference);
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
 
     disposable.dispose();
