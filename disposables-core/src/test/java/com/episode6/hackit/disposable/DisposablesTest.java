@@ -121,6 +121,8 @@ public class DisposablesTest {
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isTrue();
+    verify(mWeakReference).get();
+    verifyNoMoreInteractions(mWeakReference);
   }
 
   @Test
@@ -131,6 +133,8 @@ public class DisposablesTest {
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isFalse();
+    verify(mWeakReference).get();
+    verifyNoMoreInteractions(mWeakReference);
   }
 
   @Test
@@ -140,17 +144,20 @@ public class DisposablesTest {
 
     disposable.dispose();
 
+    verify(mWeakReference).get();
     verify(mObjWithCleanup).cleanup();
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verify(mWeakReference).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 
   @Test
-  public void testDisposalOfWeakDisposableWNoRef() {
+  public void testDisposalOfWeakDisposableNoRef() {
     CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
 
     disposable.dispose();
 
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verify(mWeakReference).get();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 
   @Test
@@ -160,7 +167,8 @@ public class DisposablesTest {
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isTrue();
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verify(mWeakReference).get();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 
   @Test
@@ -171,8 +179,9 @@ public class DisposablesTest {
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isFalse();
+    verify(mWeakReference).get();
     verify(mObjWithCleanup).isCleanedUp();
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 
   @Test
@@ -182,9 +191,11 @@ public class DisposablesTest {
 
     disposable.dispose();
 
+    verify(mWeakReference).get();
     verify(mObjWithCleanup).isCleanedUp();
     verify(mObjWithCleanup).cleanup();
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verify(mWeakReference).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 
   @Test
@@ -193,6 +204,7 @@ public class DisposablesTest {
 
     disposable.dispose();
 
-    verifyNoMoreInteractions(mObjWithCleanup);
+    verify(mWeakReference).get();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
   }
 }
