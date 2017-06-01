@@ -43,7 +43,7 @@ public class DisposableCollectionTest {
     DisposableCollection collection = createWith(mDisposable1);
 
     collection.dispose();
-    collection.addDisposable(mCheckedDisposable2);
+    collection.add(mCheckedDisposable2);
   }
 
   @Test

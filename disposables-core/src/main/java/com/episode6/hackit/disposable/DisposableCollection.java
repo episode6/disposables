@@ -44,7 +44,7 @@ public class DisposableCollection implements HasDisposables {
    *
    * throws an {@link IllegalStateException} if this collection is already disposed
    */
-  public <T extends Disposable> T addDisposable(T disposable) {
+  public <T extends Disposable> T add(T disposable) {
     synchronized (this) {
       if (mIsDisposed) {
         throw new IllegalStateException(
@@ -54,6 +54,17 @@ public class DisposableCollection implements HasDisposables {
       mDisposables.add(disposable);
     }
     return disposable;
+  }
+
+  public void addAll(Disposable... disposables) {
+    synchronized (this) {
+      if (mIsDisposed) {
+        throw new IllegalStateException(
+            "Tried to addAll disposables to a DisposableCollection after collection has" +
+                " already been disposed");
+      }
+      Collections.addAll(mDisposables, disposables);
+    }
   }
 
   /**
