@@ -6,7 +6,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+
 import static com.episode6.hackit.disposable.DisposableCollection.createWith;
+import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -20,16 +24,18 @@ public class DisposableCollectionTest {
   @Mock CheckedDisposable mCheckedDisposable1;
   @Mock Disposable mDisposable2;
   @Mock CheckedDisposable mCheckedDisposable2;
+  @Mock HasDisposables mHasDisposables;
 
   @Test
   public void testSimpleDispose() {
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1);
+    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.dispose();
 
     verify(mDisposable1).dispose();
     verify(mCheckedDisposable1).dispose();
-    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1);
+    verify(mHasDisposables).dispose();
+    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1, mHasDisposables);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -42,32 +48,36 @@ public class DisposableCollectionTest {
 
   @Test
   public void testSimpleFlushNotDisposed() {
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1);
+    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.flushDisposed();
 
     verify(mCheckedDisposable1).isDisposed();
+    verify(mHasDisposables).flushDisposed();
 
     collection.dispose();
 
     verify(mDisposable1).dispose();
     verify(mCheckedDisposable1).dispose();
-    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1);
+    verify(mHasDisposables).dispose();
+    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1, mHasDisposables);
   }
 
   @Test
   public void testSimpleFlushDisposed() {
     when(mCheckedDisposable1.isDisposed()).thenReturn(true);
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1);
+    when(mHasDisposables.flushDisposed()).thenReturn(true);
+    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.flushDisposed();
 
     verify(mCheckedDisposable1).isDisposed();
+    verify(mHasDisposables).flushDisposed();
 
     collection.dispose();
 
     verify(mDisposable1).dispose();
-    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1);
+    verifyNoMoreInteractions(mDisposable1, mCheckedDisposable1, mHasDisposables);
   }
 
   @Test
@@ -120,5 +130,59 @@ public class DisposableCollectionTest {
     verify(mDisposable1).dispose();
     verify(mDisposable2).dispose();
     verifyNoMoreInteractions(mDisposable1, mDisposable2, mCheckedDisposable1, mCheckedDisposable2);
+  }
+
+  @Test
+  public void testEmptyAfterFlushCanDispose() throws NoSuchFieldException, IllegalAccessException {
+    when(mCheckedDisposable1.isDisposed()).thenReturn(true);
+    when(mCheckedDisposable2.isDisposed()).thenReturn(true);
+    when(mHasDisposables.flushDisposed()).thenReturn(true);
+    DisposableCollection collection = DisposableCollection.createWith(
+        true,
+        mCheckedDisposable1,
+        mCheckedDisposable2,
+        mHasDisposables);
+
+    boolean result = collection.flushDisposed();
+
+    assertThat(result).isTrue();
+    assertInternalCollectionEmpty(collection);
+  }
+
+  @Test
+  public void testEmptyAfterFlushCantDispose() throws NoSuchFieldException, IllegalAccessException {
+    when(mCheckedDisposable1.isDisposed()).thenReturn(true);
+    when(mCheckedDisposable2.isDisposed()).thenReturn(true);
+    when(mHasDisposables.flushDisposed()).thenReturn(true);
+    DisposableCollection collection = DisposableCollection.createWith(
+        false,
+        mCheckedDisposable1,
+        mCheckedDisposable2,
+        mHasDisposables);
+
+    boolean result = collection.flushDisposed();
+
+    assertThat(result).isFalse();
+    assertInternalCollectionEmpty(collection);
+  }
+
+  @Test
+  public void testFlushReturnValueEmptyCollection() {
+    DisposableCollection collectionDisposes = DisposableCollection.createWith(true);
+    DisposableCollection collectionDoesntDispose = DisposableCollection.createWith(false);
+
+    boolean disposesResult = collectionDisposes.flushDisposed();
+    boolean doesntDisposeResult = collectionDoesntDispose.flushDisposed();
+
+    assertThat(disposesResult).isTrue();
+    assertThat(doesntDisposeResult).isFalse();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void assertInternalCollectionEmpty(DisposableCollection collection)
+      throws NoSuchFieldException, IllegalAccessException {
+    Field collectionField = DisposableCollection.class.getDeclaredField("mDisposables");
+    collectionField.setAccessible(true);
+    assertThat((Collection)collectionField.get(collection)).isEmpty();
   }
 }
