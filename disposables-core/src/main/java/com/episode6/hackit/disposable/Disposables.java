@@ -172,7 +172,7 @@ public class Disposables {
     final Disposer<V> disposer;
     @Nullable final DisposeChecker<V> disposeChecker;
 
-    private WeakDisposableComponents(
+    WeakDisposableComponents(
         V instance,
         Disposer<V> disposer,
         DisposeChecker<V> disposeChecker) {
@@ -196,7 +196,7 @@ public class Disposables {
       instanceRef.clear();
     }
 
-    private boolean isInstanceDisposed(V instance) {
+    boolean isInstanceDisposed(V instance) {
       return instance == null || (disposeChecker != null && disposeChecker.isInstanceDisposed(instance));
     }
   }
@@ -205,7 +205,7 @@ public class Disposables {
 
     final Disposer<V> mDelegateDisposer;
 
-    private DisposableDisposer(Disposer<V> delegateDisposer) {
+    DisposableDisposer(Disposer<V> delegateDisposer) {
       mDelegateDisposer = delegateDisposer;
     }
 
@@ -220,7 +220,7 @@ public class Disposables {
 
     final @Nullable DisposeChecker<V> mDelegateDisposeChecker;
 
-    private CheckedDisposableChecker(@Nullable DisposeChecker<V> delegateDisposeChecker) {
+    CheckedDisposableChecker(@Nullable DisposeChecker<V> delegateDisposeChecker) {
       mDelegateDisposeChecker = delegateDisposeChecker;
     }
 
@@ -235,7 +235,7 @@ public class Disposables {
 
   private static class DelegateDisposableRunnable extends DelegateCheckedDisposable<Runnable> implements DisposableRunnable {
 
-    public DelegateDisposableRunnable(Runnable delegate) {
+    DelegateDisposableRunnable(Runnable delegate) {
       super(delegate);
     }
 
