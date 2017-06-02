@@ -8,6 +8,23 @@ import java.lang.ref.WeakReference;
  */
 public class Disposables {
 
+  /**
+   * Creates a {@link Disposable} out of a generic object and a {@link Disposer} for that
+   * object.
+   *
+   * If wrapping an object that already implements {@link Disposable}, it is not necessary to
+   * call dispose() from your Disposer, dispose() will be called automatically after your Disposer
+   * executes.
+   *
+   * If the provided instance implements {@link CheckedDisposable}, this method will also
+   * return a {@link CheckedDisposable}
+   *
+   * @param instance The object that needs disposal
+   * @param disposer The {@link Disposer} that can perform disposal on the provided instance
+   * @param <T> The type of object being disposed.
+   * @return A new {@link Disposable} that will pass the provided instance
+   * to {@link Disposer#disposeInstance(Object)} when {@link Disposable#dispose()} is called
+   */
   @SuppressWarnings("unchecked")
   public static <T> Disposable create(T instance, Disposer<T> disposer) {
     if (instance instanceof CheckedDisposable) {
@@ -19,6 +36,24 @@ public class Disposables {
             disposer));
   }
 
+  /**
+   * Creates a {@link CheckedDisposable} out of a generic object, and a {@link Disposer}
+   * and {@link DisposeChecker} for that object.
+   *
+   * In this case it's guaranteed that {@link DisposeChecker#isInstanceDisposed(Object)}
+   * will be called before {@link Disposer#disposeInstance(Object)}
+   *
+   * If wrapping an object that already implements {@link Disposable} or {@link CheckedDisposable},
+   * it is not necessary to call dispose() or isDisposed() from your Disposer/DisposeChecker. They
+   * will be called automatically after your Disposer/DisposeChecker has executed.
+   *
+   * @param instance The object that needs disposal
+   * @param disposer The {@link Disposer} that can perform disposal on the provided instance
+   * @param disposeChecker The {@link DisposeChecker} that can check if the object is already disposed.
+   * @param <T> The type of object being disposed.
+   * @return A new {@link CheckedDisposable} that will pass the provided instance to
+   * {@link DisposeChecker#isInstanceDisposed(Object)} and {@link Disposer#disposeInstance(Object)}
+   */
   public static <T> CheckedDisposable createChecked(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
     return new DelegateCheckedDisposable<>(
         new CheckedDisposableComponents<T>(
@@ -27,6 +62,17 @@ public class Disposables {
             disposeChecker));
   }
 
+  /**
+   * Create a {@link CheckedDisposable} that holds a {@link WeakReference} to the supplied instance
+   * instead of a strong one. Calls to {@link CheckedDisposable#isDisposed()} will check to see if
+   * the reference still exists. Calls to {@link Disposable#dispose()} will clear the weak reference
+   * after executing your {@link Disposer} (assuming the reference still exists)
+   *
+   * @param instance The object that needs disposal (will be weakly referenced)
+   * @param disposer The {@link Disposer} that can perform disposal on the provided instance
+   * @param <T> The type of object being disposed.
+   * @return A new {@link CheckedDisposable} that hold a {@link WeakReference} to the supplied instance.
+   */
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer) {
     return new DelegateCheckedDisposable<>(
         new WeakDisposableComponents<T>(
@@ -35,6 +81,19 @@ public class Disposables {
             null));
   }
 
+  /**
+   * Create a {@link CheckedDisposable} that holds a {@link WeakReference} to the supplied instance
+   * instead of a strong one. Calls to {@link CheckedDisposable#isDisposed()} will check to see if
+   * the reference still exists and only call your {@link DisposeChecker} if it does. Calls
+   * to {@link Disposable#dispose()} will clear the weak reference after executing your {@link Disposer}
+   * (again, assuming the reference still exists)
+   *
+   * @param instance The object that needs disposal (will be weakly referenced)
+   * @param disposer The {@link Disposer} that can perform disposal on the provided instance
+   * @param disposeChecker The {@link DisposeChecker} that can check if the object is already disposed.
+   * @param <T> The type of object being disposed.
+   * @return A new {@link CheckedDisposable} that hold a {@link WeakReference} to the supplied instance.
+   */
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
     return new DelegateCheckedDisposable<>(
         new WeakDisposableComponents<T>(

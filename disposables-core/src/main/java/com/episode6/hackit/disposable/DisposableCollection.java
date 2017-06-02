@@ -12,9 +12,10 @@ public class DisposableCollection implements HasDisposables {
 
   /**
    * Creates a {@link DisposableCollection} that can become disposed with a call
-   * to {@link #flushDisposed()} if collection is empty. A flushable collection
+   * to {@link #flushDisposed()} if the collection is empty. A flushable collection
    * is intented to be fully populated before being added to a root / unflushable
    * collection.
+   *
    * @param disposables Disposables to add to the returned collection.
    * @return A new flushable {@link DisposableCollection} with the provided disposables
    * included
