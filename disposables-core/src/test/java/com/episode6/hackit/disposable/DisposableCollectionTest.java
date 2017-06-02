@@ -9,7 +9,6 @@ import org.mockito.junit.MockitoRule;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
-import static com.episode6.hackit.disposable.DisposableCollection.createWith;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -28,7 +27,7 @@ public class DisposableCollectionTest {
 
   @Test
   public void testSimpleDispose() {
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
+    DisposableCollection collection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.dispose();
 
@@ -40,7 +39,7 @@ public class DisposableCollectionTest {
 
   @Test(expected = IllegalStateException.class)
   public void testThrowsWhenAddAfterDispose() {
-    DisposableCollection collection = createWith(mDisposable1);
+    DisposableCollection collection = DisposableCollection.createFlushable(mDisposable1);
 
     collection.dispose();
     collection.add(mCheckedDisposable2);
@@ -48,7 +47,7 @@ public class DisposableCollectionTest {
 
   @Test
   public void testSimpleFlushNotDisposed() {
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
+    DisposableCollection collection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.flushDisposed();
 
@@ -67,7 +66,7 @@ public class DisposableCollectionTest {
   public void testSimpleFlushDisposed() {
     when(mCheckedDisposable1.isDisposed()).thenReturn(true);
     when(mHasDisposables.flushDisposed()).thenReturn(true);
-    DisposableCollection collection = createWith(mDisposable1, mCheckedDisposable1, mHasDisposables);
+    DisposableCollection collection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, mHasDisposables);
 
     collection.flushDisposed();
 
@@ -82,8 +81,8 @@ public class DisposableCollectionTest {
 
   @Test
   public void testParentChildDispose() {
-    DisposableCollection childCollection = createWith(mDisposable2, mCheckedDisposable2);
-    DisposableCollection parentCollection = createWith(mDisposable1, mCheckedDisposable1, childCollection);
+    DisposableCollection childCollection = DisposableCollection.createFlushable(mDisposable2, mCheckedDisposable2);
+    DisposableCollection parentCollection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, childCollection);
 
     parentCollection.dispose();
 
@@ -96,8 +95,8 @@ public class DisposableCollectionTest {
 
   @Test
   public void testParentChildFlushNotDisposed() {
-    DisposableCollection childCollection = createWith(mDisposable2, mCheckedDisposable2);
-    DisposableCollection parentCollection = createWith(mDisposable1, mCheckedDisposable1, childCollection);
+    DisposableCollection childCollection = DisposableCollection.createFlushable(mDisposable2, mCheckedDisposable2);
+    DisposableCollection parentCollection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, childCollection);
 
     parentCollection.flushDisposed();
 
@@ -117,8 +116,8 @@ public class DisposableCollectionTest {
   public void testParentChildFlushDisposed() {
     when(mCheckedDisposable1.isDisposed()).thenReturn(true);
     when(mCheckedDisposable2.isDisposed()).thenReturn(true);
-    DisposableCollection childCollection = createWith(mDisposable2, mCheckedDisposable2);
-    DisposableCollection parentCollection = createWith(mDisposable1, mCheckedDisposable1, childCollection);
+    DisposableCollection childCollection = DisposableCollection.createFlushable(mDisposable2, mCheckedDisposable2);
+    DisposableCollection parentCollection = DisposableCollection.createFlushable(mDisposable1, mCheckedDisposable1, childCollection);
 
     parentCollection.flushDisposed();
 
@@ -137,8 +136,7 @@ public class DisposableCollectionTest {
     when(mCheckedDisposable1.isDisposed()).thenReturn(true);
     when(mCheckedDisposable2.isDisposed()).thenReturn(true);
     when(mHasDisposables.flushDisposed()).thenReturn(true);
-    DisposableCollection collection = DisposableCollection.createWith(
-        true,
+    DisposableCollection collection = DisposableCollection.createFlushable(
         mCheckedDisposable1,
         mCheckedDisposable2,
         mHasDisposables);
@@ -154,8 +152,7 @@ public class DisposableCollectionTest {
     when(mCheckedDisposable1.isDisposed()).thenReturn(true);
     when(mCheckedDisposable2.isDisposed()).thenReturn(true);
     when(mHasDisposables.flushDisposed()).thenReturn(true);
-    DisposableCollection collection = DisposableCollection.createWith(
-        false,
+    DisposableCollection collection = DisposableCollection.createUnFlushable(
         mCheckedDisposable1,
         mCheckedDisposable2,
         mHasDisposables);
@@ -168,8 +165,8 @@ public class DisposableCollectionTest {
 
   @Test
   public void testFlushReturnValueEmptyCollection() {
-    DisposableCollection collectionDisposes = DisposableCollection.createWith(true);
-    DisposableCollection collectionDoesntDispose = DisposableCollection.createWith(false);
+    DisposableCollection collectionDisposes = DisposableCollection.createFlushable();
+    DisposableCollection collectionDoesntDispose = DisposableCollection.createUnFlushable();
 
     boolean disposesResult = collectionDisposes.flushDisposed();
     boolean doesntDisposeResult = collectionDoesntDispose.flushDisposed();

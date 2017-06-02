@@ -33,7 +33,7 @@ public class DisposableFutures {
     }
     return new DelegateDisposableFuture<T>(
         future,
-        DisposableCollection.createWith(true, disposables));
+        DisposableCollection.createFlushable(disposables));
   }
 
   /**
