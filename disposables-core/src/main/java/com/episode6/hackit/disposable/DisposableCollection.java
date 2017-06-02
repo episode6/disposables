@@ -1,9 +1,6 @@
 package com.episode6.hackit.disposable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * A collection of {@link Disposable}s that implements {@link HasDisposables}.
@@ -48,7 +45,7 @@ public class DisposableCollection implements HasDisposables {
     return collection;
   }
 
-  private final Collection<Disposable> mDisposables = new ArrayList<>();
+  private final List<Disposable> mDisposables = new LinkedList<>();
   private final boolean mDisposeOnFlush;
   private transient volatile boolean mIsDisposed = false;
 
@@ -132,7 +129,7 @@ public class DisposableCollection implements HasDisposables {
       return;
     }
 
-    Collection<Disposable> disposables;
+    List<Disposable> disposables;
     synchronized (this)  {
       if (mIsDisposed) {
         return;
@@ -143,8 +140,8 @@ public class DisposableCollection implements HasDisposables {
       mDisposables.clear();
     }
 
-    for (Disposable d : disposables) {
-      d.dispose();
+    for (int i = disposables.size()-1; i >= 0; i--) {
+      disposables.get(i).dispose();
     }
   }
 

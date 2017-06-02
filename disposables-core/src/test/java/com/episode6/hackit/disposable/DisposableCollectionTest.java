@@ -2,6 +2,7 @@ package com.episode6.hackit.disposable;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -173,6 +174,24 @@ public class DisposableCollectionTest {
 
     assertThat(disposesResult).isTrue();
     assertThat(doesntDisposeResult).isFalse();
+  }
+
+  @Test
+  public void testDisposeInverseOrder() {
+    DisposableCollection collection = DisposableCollection.createUnFlushable();
+    collection.add(mDisposable1);
+    collection.add(mDisposable2);
+    collection.add(mCheckedDisposable1);
+    collection.add(mCheckedDisposable2);
+
+    collection.dispose();
+
+    InOrder inOrder = inOrder(mDisposable1, mDisposable2, mCheckedDisposable1, mCheckedDisposable2);
+    inOrder.verify(mCheckedDisposable2).dispose();
+    inOrder.verify(mCheckedDisposable1).dispose();
+    inOrder.verify(mDisposable2).dispose();
+    inOrder.verify(mDisposable1).dispose();
+    verifyNoMoreInteractions(mDisposable1, mDisposable2, mCheckedDisposable1, mCheckedDisposable2);
   }
 
   @SuppressWarnings("unchecked")
