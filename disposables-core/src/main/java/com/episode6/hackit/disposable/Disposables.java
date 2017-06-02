@@ -102,6 +102,15 @@ public class Disposables {
             disposeChecker));
   }
 
+  /**
+   * Creates a {@link DisposableRunnable} out of the provided {@link Runnable}. The resulting
+   * DisposableRunnable will only allow its delegate to execute once before marking itself disposed.
+   * If the DisposableRunnable is disposed before being executed, the delegate runnable will not
+   * execute at all.
+   *
+   * @param runnable The {@link Runnable} to wrap as a disposable.
+   * @return A new {@link DisposableRunnable}
+   */
   public static DisposableRunnable createRunnable(Runnable runnable) {
     if (runnable instanceof DisposableRunnable) {
       return (DisposableRunnable) runnable;
