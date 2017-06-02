@@ -20,6 +20,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Tests {@link Disposables}
  */
+@SuppressWarnings("unchecked")
 @PrepareForTest({Disposables.class}) // creates weak refs
 @RunWith(PowerMockRunner.class)
 public class DisposablesTest {
@@ -53,6 +54,9 @@ public class DisposablesTest {
   @Mock WeakReference<ObjWithCleanup> mWeakReference;
   @Mock Runnable mRunnable;
   @Mock RunnableWithDispose mRunnableWithDispose;
+
+  @Mock Disposable mMockDisposable;
+  @Mock CheckedDisposable mMockCheckedDisposable;
 
   @Before
   public void setup() throws Exception {
@@ -104,7 +108,6 @@ public class DisposablesTest {
     verifyNoMoreInteractions(mObjWithCleanup);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testDisposableOfDisposable() {
     Disposable firstDisposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
@@ -117,6 +120,76 @@ public class DisposablesTest {
     verify(mObjWithCleanup).cleanup();  // ensures our first disposable gets called through even though
                                         // our 2nd disposer is empty
     verifyNoMoreInteractions(secondDisposer, mObjWithCleanup);
+  }
+
+  @Test
+  public void testWrapRawDisposable() {
+    Disposer mockDisposer = mock(Disposer.class);
+    Disposable wrapper = Disposables.create(mMockDisposable, mockDisposer);
+
+    wrapper.dispose();
+
+    verify(mockDisposer).disposeInstance(mMockDisposable);
+    verify(mMockDisposable).dispose();
+    verifyNoMoreInteractions(mMockDisposable, mockDisposer);
+  }
+
+  @Test
+  public void testWrapRawCheckedDisposableIsChecked() {
+    Disposer mockDisposer = mock(Disposer.class);
+    Disposable wrapper = Disposables.create(mMockCheckedDisposable, mockDisposer);
+
+    assertThat(wrapper).isInstanceOf(CheckedDisposable.class);
+    boolean isDisposed = ((CheckedDisposable)wrapper).isDisposed();
+
+    verify(mMockCheckedDisposable).isDisposed();
+    verifyNoMoreInteractions(mMockCheckedDisposable);
+    assertThat(isDisposed).isFalse();
+  }
+
+  @Test
+  public void testWrapRawCheckedDisposableIsDisposedCheckBoth() {
+    Disposer mockDisposer = mock(Disposer.class);
+    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
+    when(mockDisposeChecker.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
+    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+
+    boolean isDisposed = wrapper.isDisposed();
+
+    verify(mMockCheckedDisposable).isDisposed();
+    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
+    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    assertThat(isDisposed).isFalse();
+  }
+
+  @Test
+  public void testWrapRawCheckedDisposableIsDisposedTrue() {
+    Disposer mockDisposer = mock(Disposer.class);
+    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
+    when(mockDisposeChecker.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
+    when(mMockCheckedDisposable.isDisposed()).thenReturn(true);
+    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+
+    boolean isDisposed = wrapper.isDisposed();
+
+    verify(mMockCheckedDisposable).isDisposed();
+    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
+    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    assertThat(isDisposed).isTrue();
+  }
+
+  @Test
+  public void testWrapRawCheckedDisposableDisposed() {
+    Disposer mockDisposer = mock(Disposer.class);
+    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
+    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+
+    wrapper.dispose();
+
+    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
+    verify(mockDisposer).disposeInstance(mMockCheckedDisposable);
+    verify(mMockCheckedDisposable).dispose();
+    verifyNoMoreInteractions(mockDisposer, mockDisposeChecker, mMockCheckedDisposable);
   }
 
   @Test
