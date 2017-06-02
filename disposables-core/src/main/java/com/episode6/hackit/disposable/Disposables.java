@@ -30,10 +30,9 @@ public class Disposables {
     if (instance instanceof CheckedDisposable) {
       return createChecked(instance, disposer, new CheckedDisposableChecker(null));
     }
-    return new DelegateDisposable<>(
-        new DisposableComponents<T>(
-            instance,
-            disposer));
+    return new DisposableComponents<T>(
+        instance,
+        disposer);
   }
 
   /**
@@ -55,11 +54,10 @@ public class Disposables {
    * {@link DisposeChecker#isInstanceDisposed(Object)} and {@link Disposer#disposeInstance(Object)}
    */
   public static <T> CheckedDisposable createChecked(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
-    return new DelegateCheckedDisposable<>(
-        new CheckedDisposableComponents<T>(
-            instance,
-            disposer,
-            disposeChecker));
+    return new CheckedDisposableComponents<T>(
+        instance,
+        disposer,
+        disposeChecker);
   }
 
   /**
@@ -74,11 +72,10 @@ public class Disposables {
    * @return A new {@link CheckedDisposable} that hold a {@link WeakReference} to the supplied instance.
    */
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer) {
-    return new DelegateCheckedDisposable<>(
-        new WeakDisposableComponents<T>(
-            instance,
-            disposer,
-            null));
+    return new WeakDisposableComponents<T>(
+        instance,
+        disposer,
+        null);
   }
 
   /**
@@ -95,11 +92,10 @@ public class Disposables {
    * @return A new {@link CheckedDisposable} that hold a {@link WeakReference} to the supplied instance.
    */
   public static <T> CheckedDisposable createWeak(T instance, Disposer<T> disposer, DisposeChecker<T> disposeChecker) {
-    return new DelegateCheckedDisposable<>(
-        new WeakDisposableComponents<T>(
-            instance,
-            disposer,
-            disposeChecker));
+    return new WeakDisposableComponents<T>(
+        instance,
+        disposer,
+        disposeChecker);
   }
 
   /**
