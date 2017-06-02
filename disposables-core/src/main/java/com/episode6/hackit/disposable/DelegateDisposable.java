@@ -50,9 +50,17 @@ public class DelegateDisposable<V> implements Disposable {
    * instance of the delegate. All subsequent calls to {@link #markDisposed()}
    * and {@link #getDelegate()} will return null after this method has been
    * called once.
+   *
+   * This method is package-protected as it should not be used in direct subclasses
+   * of {@link DelegateDisposable}. Only subclasses of {@link DelegateCheckedDisposable}
+   * should use this method.
+   *
+   * If calling this method from a subclass, its expected that you will pass the returned
+   * object to {@link #disposeObjectIfNeeded(Object)} when you are finished with it.
+   *
    * @return The delegate or null if we've already been disposed.
    */
-  protected final @Nullable V markDisposed() {
+   @Nullable V markDisposed() {
     if (mIsDisposed) {
       return null;
     }

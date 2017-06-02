@@ -22,6 +22,11 @@ public class DelegateCheckedDisposable<V> extends DelegateDisposable<V> implemen
     return isObjectDisposed(getDelegate());
   }
 
+  @Override
+  protected final @Nullable V markDisposed() {
+    return super.markDisposed();
+  }
+
   /**
    * For use by subclasses - Checks if an object should be considered disposed or not.
    * The object is disposed if it is null OR it implements {@link CheckedDisposable}
