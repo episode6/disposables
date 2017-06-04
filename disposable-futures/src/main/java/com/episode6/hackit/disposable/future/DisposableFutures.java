@@ -64,7 +64,7 @@ public class DisposableFutures {
     return disposableFuture;
   }
 
-  private static class DelegateDisposableFuture<V> extends DelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
+  private static class DelegateDisposableFuture<V> extends ForgetfulDelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
 
     private final DisposableCollection mDisposables;
 
@@ -75,7 +75,7 @@ public class DisposableFutures {
 
     @Override
     public boolean flushDisposed() {
-      if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegate())) {
+      if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegateOrNull())) {
         dispose();
         return true;
       }
@@ -91,7 +91,7 @@ public class DisposableFutures {
     @Override
     public void addListener(Runnable listener, Executor executor) {
       getDelegateOrThrow().addListener(
-          mDisposables.add(Disposables.createRunnable(listener)),
+          mDisposables.add(Disposables.runnable(listener)),
           executor);
     }
 
@@ -121,7 +121,7 @@ public class DisposableFutures {
     }
 
     ListenableFuture<V> getDelegateOrThrow() {
-      ListenableFuture<V> delegate = getDelegate();
+      ListenableFuture<V> delegate = getDelegateOrNull();
       if (delegate == null) {
         throw new NullPointerException("Attempting to interact with DisposableFuture after its been disposed.");
       }

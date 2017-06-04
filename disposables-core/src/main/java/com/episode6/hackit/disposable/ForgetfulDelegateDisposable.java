@@ -9,11 +9,11 @@ import javax.annotation.Nullable;
  * and if the delegate object itself implements {@link Disposable}, then dispose will
  * be called on the object.
  */
-public class DelegateDisposable<V> implements Disposable {
+public class ForgetfulDelegateDisposable<V> implements Disposable {
   private transient volatile boolean mIsDisposed;
   private @Nullable V mDelegate;
 
-  public DelegateDisposable(V delegate) {
+  public ForgetfulDelegateDisposable(V delegate) {
     mIsDisposed = false;
     mDelegate = delegate;
   }
@@ -31,7 +31,7 @@ public class DelegateDisposable<V> implements Disposable {
    * marking this object as disposed.
    * @return The delegate or null if we've already been disposed.
    */
-  protected final @Nullable V getDelegate() {
+  protected final @Nullable V getDelegateOrNull() {
     if (mIsDisposed) {
       return null;
     }
@@ -48,11 +48,11 @@ public class DelegateDisposable<V> implements Disposable {
   /**
    * For use by subclasses - mark this object as disposed and return an
    * instance of the delegate. All subsequent calls to {@link #markDisposed()}
-   * and {@link #getDelegate()} will return null after this method has been
+   * and {@link #getDelegateOrNull()} will return null after this method has been
    * called once.
    *
    * This method is package-protected as it should not be used in direct subclasses
-   * of {@link DelegateDisposable}. Only subclasses of {@link DelegateCheckedDisposable}
+   * of {@link ForgetfulDelegateDisposable}. Only subclasses of {@link ForgetfulDelegateCheckedDisposable}
    * should use this method.
    *
    * If calling this method from a subclass, its expected that you will pass the returned

@@ -4,12 +4,12 @@ import javax.annotation.Nullable;
 
 /**
  * An implementation of {@link CheckedDisposable} that can be subclassed or used directly.
- * Respects the same rules as {@link DelegateDisposable} but will also check if the delegate
+ * Respects the same rules as {@link ForgetfulDelegateDisposable} but will also check if the delegate
  * implements {@link CheckedDisposable} when {@link #isDisposed()} is called
  */
-public class DelegateCheckedDisposable<V> extends DelegateDisposable<V> implements CheckedDisposable {
+public class ForgetfulDelegateCheckedDisposable<V> extends ForgetfulDelegateDisposable<V> implements CheckedDisposable {
 
-  public DelegateCheckedDisposable(V delegate) {
+  public ForgetfulDelegateCheckedDisposable(V delegate) {
     super(delegate);
   }
 
@@ -19,7 +19,7 @@ public class DelegateCheckedDisposable<V> extends DelegateDisposable<V> implemen
    */
   @Override
   public boolean isDisposed() {
-    return isObjectDisposed(getDelegate());
+    return isObjectDisposed(getDelegateOrNull());
   }
 
   @Override

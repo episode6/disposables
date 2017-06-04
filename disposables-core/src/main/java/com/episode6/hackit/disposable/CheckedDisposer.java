@@ -1,10 +1,9 @@
 package com.episode6.hackit.disposable;
 
 /**
- * An object that can check if a specific type of object is "disposed" or not.
- * Used to convert a non-disposable object into a {@link CheckedDisposable}
+ * An extension of {@link Disposer} that can also report if an object is already disposed.
  */
-public interface DisposeChecker<V> {
+public interface CheckedDisposer<V> extends Disposer<V> {
 
   /**
    * @param instance the instance to check the disposable status of

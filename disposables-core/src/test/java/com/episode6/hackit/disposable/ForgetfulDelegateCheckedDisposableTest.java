@@ -16,9 +16,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests {@link DelegateCheckedDisposable}
+ * Tests {@link ForgetfulDelegateCheckedDisposable}
  */
-public class DelegateCheckedDisposableTest {
+public class ForgetfulDelegateCheckedDisposableTest {
 
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
@@ -28,7 +28,7 @@ public class DelegateCheckedDisposableTest {
 
   @Test
   public void testIsDisposedRandomObject() throws NoSuchFieldException, IllegalAccessException {
-    DelegateCheckedDisposable disposable = new DelegateCheckedDisposable<>(mRandomObject);
+    ForgetfulDelegateCheckedDisposable disposable = new ForgetfulDelegateCheckedDisposable<>(mRandomObject);
 
     boolean isDisposedBefore = disposable.isDisposed();
     disposable.dispose();
@@ -42,7 +42,7 @@ public class DelegateCheckedDisposableTest {
 
   @Test
   public void testIsDisposedDisposable() throws NoSuchFieldException, IllegalAccessException {
-    DelegateCheckedDisposable disposable = new DelegateCheckedDisposable<>(mDisposable);
+    ForgetfulDelegateCheckedDisposable disposable = new ForgetfulDelegateCheckedDisposable<>(mDisposable);
 
     boolean isDisposedBefore = disposable.isDisposed();
     disposable.dispose();
@@ -57,7 +57,7 @@ public class DelegateCheckedDisposableTest {
 
   @Test
   public void testIsDisposedCheckedDisposable() throws NoSuchFieldException, IllegalAccessException {
-    DelegateCheckedDisposable disposable = new DelegateCheckedDisposable<>(mCheckedDisposable);
+    ForgetfulDelegateCheckedDisposable disposable = new ForgetfulDelegateCheckedDisposable<>(mCheckedDisposable);
 
     boolean isDisposedBefore = disposable.isDisposed();
     disposable.dispose();
@@ -75,7 +75,7 @@ public class DelegateCheckedDisposableTest {
   @Test
   public void testIsDisposedPreDisposedCheckedDisposable() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposable.isDisposed()).thenReturn(true);
-    DelegateCheckedDisposable disposable = new DelegateCheckedDisposable<>(mCheckedDisposable);
+    ForgetfulDelegateCheckedDisposable disposable = new ForgetfulDelegateCheckedDisposable<>(mCheckedDisposable);
 
     boolean isDisposedBefore = disposable.isDisposed();
     disposable.dispose();
@@ -90,9 +90,9 @@ public class DelegateCheckedDisposableTest {
     verifyDelegateIsNull(disposable);
   }
 
-  private void verifyDelegateIsNull(DelegateCheckedDisposable delegateDisposable)
+  private void verifyDelegateIsNull(ForgetfulDelegateCheckedDisposable delegateDisposable)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = DelegateDisposable.class.getDeclaredField("mDelegate");
+    Field field = ForgetfulDelegateDisposable.class.getDeclaredField("mDelegate");
     field.setAccessible(true);
     assertThat(field.get(delegateDisposable)).isNull();
   }
