@@ -120,14 +120,6 @@ public class DisposableFutures {
       return getDelegateOrThrow().get(timeout, unit);
     }
 
-    ListenableFuture<V> getDelegateOrThrow() {
-      ListenableFuture<V> delegate = getDelegateOrNull();
-      if (delegate == null) {
-        throw new NullPointerException("Attempting to interact with DisposableFuture after its been disposed.");
-      }
-      return delegate;
-    }
-
     private static boolean flushObjectIfNeeded(@Nullable Object object) {
       if (object instanceof HasDisposables) {
         return ((HasDisposables) object).flushDisposed();

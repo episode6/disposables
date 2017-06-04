@@ -45,6 +45,15 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
     }
   }
 
+  protected final V getDelegateOrThrow() {
+    final V delegate = getDelegateOrNull();
+    if (delegate == null) {
+      throw new IllegalStateException(
+          "Attempted to interact with disposable after it's been disposed: " + getClass().getName());
+    }
+    return delegate;
+  }
+
   /**
    * For use by subclasses - mark this object as disposed and return an
    * instance of the delegate. All subsequent calls to {@link #markDisposed()}
