@@ -75,11 +75,13 @@ public class DisposableFutures {
 
     @Override
     public boolean flushDisposed() {
-      if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegateOrNull())) {
-        dispose();
-        return true;
+      synchronized (this) {
+        if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegateOrNull())) {
+          dispose();
+          return true;
+        }
+        return false;
       }
-      return false;
     }
 
     @Override
@@ -90,9 +92,11 @@ public class DisposableFutures {
 
     @Override
     public void addListener(Runnable listener, Executor executor) {
-      getDelegateOrThrow().addListener(
-          mDisposables.add(Disposables.runnable(listener)),
-          executor);
+      synchronized (this) {
+        getDelegateOrThrow().addListener(
+            mDisposables.add(Disposables.runnable(listener)),
+            executor);
+      }
     }
 
     @Override
