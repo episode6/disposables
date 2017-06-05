@@ -24,7 +24,7 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
    */
   @Override
   public void dispose() {
-    disposeObjectIfNeeded(markDisposed());
+    MaybeDisposables.dispose(markDisposed());
   }
 
   /**
@@ -72,7 +72,7 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
    * should use this method.
    *
    * If calling this method from a subclass, its expected that you will pass the returned
-   * object to {@link #disposeObjectIfNeeded(Object)} when you are finished with it.
+   * object to {@link MaybeDisposables#dispose(Object)} when you are finished with it.
    *
    * @return The delegate or null if we've already been disposed.
    */
@@ -89,17 +89,6 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
       final V instance = mDelegate;
       mDelegate = null;
       return instance;
-    }
-  }
-
-  /**
-   * For use by subclasses - checks if object implements {@link Disposable}
-   * and disposes it if it does.
-   * @param object The object to dispose.
-   */
-  protected final static void disposeObjectIfNeeded(@Nullable Object object) {
-    if (object != null && object instanceof Disposable) {
-      ((Disposable) object).dispose();
     }
   }
 }

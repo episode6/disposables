@@ -145,7 +145,7 @@ public class DisposableCollectionTest {
     boolean result = collection.flushDisposed();
 
     assertThat(result).isTrue();
-    assertThat(getInternalList(collection)).isNull();
+    assertThat(getInternalList(collection)).isEmpty();
   }
 
   @Test
@@ -197,7 +197,7 @@ public class DisposableCollectionTest {
   @SuppressWarnings("unchecked")
   private static List<Disposable> getInternalList(DisposableCollection collection)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = ForgetfulDelegateDisposable.class.getDeclaredField("mDelegate");
+    Field field = ForgetfulDisposableCollection.class.getDeclaredField("mList");
     field.setAccessible(true);
     return (List<Disposable>) field.get(collection);
   }

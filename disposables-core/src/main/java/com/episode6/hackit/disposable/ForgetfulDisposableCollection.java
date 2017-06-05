@@ -12,10 +12,10 @@ import java.util.*;
  * Note: the collection is actually a List since we need to ensure proper disposal ordering, but since callers
  * of this class have no access to its contents, the term Collection seemed more appropriate.
  */
-public class ForgetfulDisposableCollection<V>
-    extends ForgetfulDelegateDisposable<List<V>>
-    implements HasDisposables {
+public class ForgetfulDisposableCollection<V> implements HasDisposables {
 
+  private transient volatile boolean mIsDisposed = false;
+  private final List<V> mList;
   private final boolean mDisposeOnFlush;
 
   /**
@@ -25,7 +25,7 @@ public class ForgetfulDisposableCollection<V>
    * @param prefill A collection of objects to prefil the collection with.
    */
   public ForgetfulDisposableCollection(boolean disposeOnFlush, @Nullable Collection<V> prefill) {
-    super(prefill == null ? new LinkedList<V>() : new LinkedList<V>(prefill));
+    mList = prefill == null ? new LinkedList<V>() : new LinkedList<V>(prefill);
     mDisposeOnFlush = disposeOnFlush;
   }
 
@@ -37,8 +37,7 @@ public class ForgetfulDisposableCollection<V>
    */
   public <T extends V> T add(T obj) {
     synchronized (this) {
-      List<V> list = getDelegateOrThrow();
-      list.add(obj);
+      getListOrThrow().add(obj);
     }
     return obj;
   }
@@ -50,8 +49,7 @@ public class ForgetfulDisposableCollection<V>
   @SuppressWarnings("unchecked")
   public void addAll(V... objs) {
     synchronized (this) {
-      List<V> list = getDelegateOrThrow();
-      Collections.addAll(list, objs);
+      Collections.addAll(getListOrThrow(), objs);
     }
   }
 
@@ -63,19 +61,22 @@ public class ForgetfulDisposableCollection<V>
    */
   @Override
   public boolean flushDisposed() {
+    if (mIsDisposed) {
+      return true;
+    }
+
     synchronized (this) {
-      List<V> list = getDelegateOrNull();
-      if (list == null) {
+      if (mIsDisposed) {
         return true;
       }
 
-      for (Iterator<V> iterator = list.iterator(); iterator.hasNext();) {
-        if (shouldFlushDisposable(iterator.next())) {
+      for (Iterator<V> iterator = mList.iterator(); iterator.hasNext();) {
+        if (MaybeDisposables.isFlushable(iterator.next())) {
           iterator.remove();
         }
       }
 
-      if (mDisposeOnFlush && list.isEmpty()) {
+      if (mDisposeOnFlush && mList.isEmpty()) {
         dispose();
         return true;
       }
@@ -85,19 +86,34 @@ public class ForgetfulDisposableCollection<V>
 
   @Override
   public void dispose() {
-    final List<V> disposables = markDisposed();
-    if (disposables == null || disposables.isEmpty()) {
+    if (mIsDisposed) {
+      return;
+    }
+    synchronized (this) {
+      if (mIsDisposed) {
+        return;
+      }
+      mIsDisposed = true;
+    }
+    if (mList.isEmpty()) {
       return;
     }
 
-    for (ListIterator<V> iterator = disposables.listIterator(disposables.size()); iterator.hasPrevious();) {
-      disposeObjectIfNeeded(iterator.previous());
+    for (ListIterator<V> iterator = mList.listIterator(mList.size()); iterator.hasPrevious();) {
+      MaybeDisposables.dispose(iterator.previous());
     }
-    disposables.clear();
+    mList.clear();
   }
 
-  protected static boolean shouldFlushDisposable(Object disposable) {
-    return (disposable instanceof HasDisposables && ((HasDisposables) disposable).flushDisposed()) ||
-        (disposable instanceof CheckedDisposable && ((CheckedDisposable) disposable).isDisposed());
+  protected List<V> getListOrThrow() {
+    if (mIsDisposed) {
+      throw new IllegalStateException(
+          "Attempted to interact with disposable after it's been disposed: " + toString());
+    }
+    return mList;
+  }
+
+  protected @Nullable List<V> getListOrNull() {
+    return mIsDisposed ? null : mList;
   }
 }

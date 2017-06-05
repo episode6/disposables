@@ -133,7 +133,7 @@ public class Disposables {
       final Runnable delegate = markDisposed();
       if (delegate != null) {
         delegate.run();
-        disposeObjectIfNeeded(delegate);
+        MaybeDisposables.dispose(delegate);
       }
     }
   }

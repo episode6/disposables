@@ -19,23 +19,11 @@ public class ForgetfulDelegateCheckedDisposable<V> extends ForgetfulDelegateDisp
    */
   @Override
   public boolean isDisposed() {
-    return isObjectDisposed(getDelegateOrNull());
+    return MaybeDisposables.isDisposed(getDelegateOrNull());
   }
 
   @Override
   protected final @Nullable V markDisposed() {
     return super.markDisposed();
-  }
-
-  /**
-   * For use by subclasses - Checks if an object should be considered disposed or not.
-   * The object is disposed if it is null OR it implements {@link CheckedDisposable}
-   * and {@link CheckedDisposable#isDisposed()} returns true
-   * @param object The object to check the disposal status of
-   * @return true if the object is considered disposed, false otherwise.
-   */
-  protected final static boolean isObjectDisposed(@Nullable Object object) {
-    return object == null ||
-        (object instanceof CheckedDisposable && ((CheckedDisposable) object).isDisposed());
   }
 }
