@@ -16,9 +16,30 @@ public class MaybeDisposables {
     }
   }
 
+  public static <T> void dispose(@Nullable T maybeDisposable, @Nullable Disposer<T> disposer) {
+    if (maybeDisposable == null) {
+      return;
+    }
+    if (disposer != null) {
+      disposer.disposeInstance(maybeDisposable);
+    }
+    dispose(maybeDisposable);
+  }
+
   public static boolean isDisposed(@Nullable Object maybeDisposed) {
     return maybeDisposed == null ||
         maybeDisposed instanceof CheckedDisposable && ((CheckedDisposable) maybeDisposed).isDisposed();
+  }
+
+  public static <T> boolean isDisposed(@Nullable T maybeDisposed, @Nullable Disposer<T> disposer) {
+    if (maybeDisposed == null) {
+      return true;
+    }
+
+    if (disposer != null && disposer instanceof CheckedDisposer) {
+      return ((CheckedDisposer<T>)disposer).isInstanceDisposed(maybeDisposed) && isDisposed(maybeDisposed);
+    }
+    return isDisposed(maybeDisposed);
   }
 
   public static boolean isFlushable(@Nullable Object maybeFlushable) {

@@ -49,17 +49,6 @@ public class Disposables {
     return new DelegateDisposableRunnable(runnable);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> Disposer<T> maybeWrapDisposer(T instance, Disposer<T> disposer) {
-    if (instance instanceof CheckedDisposable && !(disposer instanceof CheckedDisposableDisposer)) {
-      return new CheckedDisposableDisposer(disposer);
-    }
-    if (instance instanceof Disposable && !(disposer instanceof DisposableDisposer)) {
-      return new DisposableDisposer(disposer);
-    }
-    return disposer;
-  }
-
   private static class WeakDisposableComponents<V> implements CheckedDisposable {
     final WeakReference<V> instanceRef;
     final Disposer<V> disposer;
@@ -68,57 +57,22 @@ public class Disposables {
         V instance,
         Disposer<V> disposer) {
       this.instanceRef = new WeakReference<V>(instance);
-      this.disposer = maybeWrapDisposer(instance, disposer);
+      this.disposer = disposer;
     }
 
     @Override
     public boolean isDisposed() {
-      return isInstanceDisposed(instanceRef.get());
+      return MaybeDisposables.isDisposed(instanceRef.get(), disposer);
     }
 
     @Override
     public void dispose() {
       final V instance = instanceRef.get();
-      if (isInstanceDisposed(instance)) {
+      instanceRef.clear();
+      if (MaybeDisposables.isDisposed(instance, disposer)) {
         return;
       }
-      disposer.disposeInstance(instance);
-      instanceRef.clear();
-    }
-
-    boolean isInstanceDisposed(V instance) {
-      return instance == null ||
-          (disposer instanceof CheckedDisposer && ((CheckedDisposer<V>) disposer).isInstanceDisposed(instance));
-    }
-  }
-
-  private static class DisposableDisposer<V extends Disposable> implements Disposer<V> {
-
-    final Disposer<V> mDelegateDisposer;
-
-    DisposableDisposer(Disposer<V> delegateDisposer) {
-      mDelegateDisposer = delegateDisposer;
-    }
-
-    @Override
-    public void disposeInstance(V instance) {
-      mDelegateDisposer.disposeInstance(instance);
-      instance.dispose();
-    }
-  }
-
-  private static class CheckedDisposableDisposer<V extends CheckedDisposable> extends DisposableDisposer<V> implements CheckedDisposer<V> {
-
-    CheckedDisposableDisposer(Disposer<V> delegateDisposer) {
-      super(delegateDisposer);
-    }
-
-    @Override
-    public boolean isInstanceDisposed(V instance) {
-      if (mDelegateDisposer instanceof CheckedDisposer) {
-        return ((CheckedDisposer<V>) mDelegateDisposer).isInstanceDisposed(instance) && instance.isDisposed();
-      }
-      return instance.isDisposed();
+      MaybeDisposables.dispose(instance, disposer);
     }
   }
 

@@ -174,6 +174,7 @@ public class DisposablesTest {
     disposable.dispose();
 
     verify(mWeakObjWithCleanup).get();
+    verify(mWeakObjWithCleanup).clear();
     verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
@@ -216,12 +217,13 @@ public class DisposablesTest {
   }
 
   @Test
-  public void testDisposalOfWeakCheckedDisposableWNoRef() {
+  public void testDisposalOfWeakCheckedDisposableNoRef() {
     CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new CheckedObjDisposer());
 
     disposable.dispose();
 
     verify(mWeakObjWithCleanup).get();
+    verify(mWeakObjWithCleanup).clear();
     verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
