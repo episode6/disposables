@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
  * be called on the object.
  */
 public class ForgetfulDelegateDisposable<V> implements Disposable {
+
   private transient volatile boolean mIsDisposed;
   private @Nullable V mDelegate;
 
@@ -45,11 +46,17 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
     }
   }
 
+  /**
+   * For use by subclasses - get an instance of the delegate without
+   * marking this object as disposed, or throw an IllegalStateException
+   * if the object has already been disposed.
+   * @return The delegate or null if we've already been disposed.
+   */
   protected final V getDelegateOrThrow() {
     final V delegate = getDelegateOrNull();
     if (delegate == null) {
       throw new IllegalStateException(
-          "Attempted to interact with disposable after it's been disposed: " + getClass().getName());
+          "Attempted to interact with disposable after it's been disposed: " + toString());
     }
     return delegate;
   }
