@@ -8,7 +8,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
+import java.util.List;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -145,7 +145,7 @@ public class DisposableCollectionTest {
     boolean result = collection.flushDisposed();
 
     assertThat(result).isTrue();
-    assertInternalCollectionEmpty(collection);
+    assertThat(getInternalList(collection)).isNull();
   }
 
   @Test
@@ -161,7 +161,7 @@ public class DisposableCollectionTest {
     boolean result = collection.flushDisposed();
 
     assertThat(result).isFalse();
-    assertInternalCollectionEmpty(collection);
+    assertThat(getInternalList(collection)).isEmpty();
   }
 
   @Test
@@ -195,10 +195,10 @@ public class DisposableCollectionTest {
   }
 
   @SuppressWarnings("unchecked")
-  private static void assertInternalCollectionEmpty(DisposableCollection collection)
+  private static List<Disposable> getInternalList(DisposableCollection collection)
       throws NoSuchFieldException, IllegalAccessException {
-    Field collectionField = DisposableCollection.class.getDeclaredField("mDisposables");
-    collectionField.setAccessible(true);
-    assertThat((Collection)collectionField.get(collection)).isEmpty();
+    Field field = ForgetfulDelegateDisposable.class.getDeclaredField("mDelegate");
+    field.setAccessible(true);
+    return (List<Disposable>) field.get(collection);
   }
 }

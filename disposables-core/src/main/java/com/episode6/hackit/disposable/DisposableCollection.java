@@ -1,11 +1,13 @@
 package com.episode6.hackit.disposable;
 
-import java.util.*;
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * A collection of {@link Disposable}s that implements {@link HasDisposables}.
  */
-public class DisposableCollection implements HasDisposables {
+public class DisposableCollection extends ForgetfulDisposableCollection<Disposable> {
 
   /**
    * Creates a {@link DisposableCollection} that can become disposed with a call
@@ -40,113 +42,10 @@ public class DisposableCollection implements HasDisposables {
   }
 
   private static DisposableCollection createWith(boolean disposeOnFlush, Disposable... disposables) {
-    DisposableCollection collection = new DisposableCollection(disposeOnFlush);
-    Collections.addAll(collection.mDisposables, disposables);
-    return collection;
+    return new DisposableCollection(disposeOnFlush, disposables.length == 0 ? null : Arrays.asList(disposables));
   }
 
-  private final List<Disposable> mDisposables = new LinkedList<>();
-  private final boolean mDisposeOnFlush;
-  private transient volatile boolean mIsDisposed = false;
-
-  /**
-   * Create a new DisposableCollection
-   * @param disposeOnFlush Whether this collection should be considered disposed
-   *                       after a call to flushDisposed() results in the collection
-   *                       being empty.
-   */
-  private DisposableCollection(boolean disposeOnFlush) {
-    mDisposeOnFlush = disposeOnFlush;
-  }
-
-  /**
-   * Add a new disposable to this object's collection of disposables. For conveinence,
-   * the provided disposable is returned back to the caller so that this method may be
-   * chained inside other calls.
-   * @param disposable The disposable to add
-   * @param <T> The type of the disposable being added
-   * @return the provided disposable
-   *
-   * throws an {@link IllegalStateException} if this collection is already disposed
-   */
-  public <T extends Disposable> T add(T disposable) {
-    synchronized (this) {
-      if (mIsDisposed) {
-        throw new IllegalStateException(
-            "Tried to add a disposable to a DisposableCollection after collection has" +
-                " already been disposed. Disposable added: " + disposable.toString());
-      }
-      mDisposables.add(disposable);
-    }
-    return disposable;
-  }
-
-  public void addAll(Disposable... disposables) {
-    synchronized (this) {
-      if (mIsDisposed) {
-        throw new IllegalStateException(
-            "Tried to addAll disposables to a DisposableCollection after collection has" +
-                " already been disposed");
-      }
-      Collections.addAll(mDisposables, disposables);
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean flushDisposed() {
-    if (mIsDisposed) {
-      return true;
-    }
-
-    synchronized (this)  {
-      if (mIsDisposed) {
-        return true;
-      }
-
-      for (Iterator<Disposable> iterator = mDisposables.iterator(); iterator.hasNext();) {
-        if (shouldFlushDisposable(iterator.next())) {
-          iterator.remove();
-        }
-      }
-
-      if (mDisposeOnFlush && mDisposables.isEmpty()) {
-        mIsDisposed = true;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void dispose() {
-    if (mIsDisposed) {
-      return;
-    }
-
-    List<Disposable> disposables;
-    synchronized (this)  {
-      if (mIsDisposed) {
-        return;
-      }
-      mIsDisposed = true;
-
-      disposables = new ArrayList<>(mDisposables);
-      mDisposables.clear();
-    }
-
-    for (int i = disposables.size()-1; i >= 0; i--) {
-      disposables.get(i).dispose();
-    }
-  }
-
-  private static boolean shouldFlushDisposable(Disposable disposable) {
-    return (disposable instanceof HasDisposables && ((HasDisposables) disposable).flushDisposed()) ||
-        (disposable instanceof CheckedDisposable && ((CheckedDisposable) disposable).isDisposed());
+  private DisposableCollection(boolean disposeOnFlush, @Nullable Collection<Disposable> delegate) {
+    super(disposeOnFlush, delegate);
   }
 }
