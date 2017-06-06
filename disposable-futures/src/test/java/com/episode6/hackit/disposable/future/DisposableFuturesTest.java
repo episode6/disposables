@@ -83,7 +83,7 @@ public class DisposableFuturesTest {
 
     disposableFuture.dispose();
 
-    disposableFuture.isDone();
+    Futures.addCallback(disposableFuture, mFutureCallback);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -92,7 +92,7 @@ public class DisposableFuturesTest {
 
     disposableFuture.flushDisposed();
 
-    disposableFuture.isDone();
+    Futures.addCallback(disposableFuture, mFutureCallback);
   }
 
   @Test
@@ -133,10 +133,13 @@ public class DisposableFuturesTest {
 
   @Test
   public void testWrapNonStandardDisposableFutureFlush() {
-    DisposableFuture<Boolean> disposableFuture = DisposableFutures.wrap(mMockDisposableFuture);
+    when(mCheckedDisposable.isDisposed()).thenReturn(true);
+    DisposableFuture<Boolean> disposableFuture = DisposableFutures.wrap(mMockDisposableFuture, mCheckedDisposable);
 
     boolean isDisposed = disposableFuture.flushDisposed();
 
+    assertThat(disposableFuture).isNotEqualTo(mMockDisposableFuture);
+    verify(mCheckedDisposable).isDisposed();
     verify(mMockDisposableFuture).flushDisposed();
     verifyNoMoreInteractions(mMockDisposableFuture);
     assertThat(isDisposed).isFalse();
@@ -237,7 +240,7 @@ public class DisposableFuturesTest {
     expectException(IllegalStateException.class, new ThrowRunnable() {
       @Override
       public void run() throws Throwable {
-        intFuture.get();
+        Futures.addCallback(intFuture, DisposableFuturesTest.<Integer>failingCallback(), MoreExecutors.directExecutor());
       }
     });
   }
@@ -259,7 +262,7 @@ public class DisposableFuturesTest {
     expectException(IllegalStateException.class, new ThrowRunnable() {
       @Override
       public void run() throws Throwable {
-        intFuture.get();
+        Futures.addCallback(intFuture, DisposableFuturesTest.<Integer>failingCallback(), MoreExecutors.directExecutor());
       }
     });
   }

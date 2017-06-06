@@ -30,7 +30,7 @@ public class DisposableFutures {
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      ((DelegateDisposableFuture) future).addDisposables(disposables);
+      ((DelegateDisposableFuture<T>) future).addAll(disposables);
       return (DisposableFuture<T>) future;
     }
     if (future instanceof DisposableFuture && disposables.length == 0) {
@@ -115,80 +115,50 @@ public class DisposableFutures {
     return transformAsyncAndWrap(wrap(input), transform, executor);
   }
 
-  private static class DelegateDisposableFuture<V> extends ForgetfulDelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
+  private static class DelegateDisposableFuture<V> extends ForgetfulDisposableCollection<Disposable> implements DisposableFuture<V> {
 
-    private final ForgetfulDisposableCollection<Disposable> mDisposables;
+    private final ListenableFuture<V> mDelegate;
 
     DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<Disposable> disposables) {
-      super(delegate);
-      mDisposables = new ForgetfulDisposableCollection<>(true, disposables);
-    }
-
-    void addDisposables(Disposable... disposables) {
-      if (disposables.length <= 0) {
-        return;
+      super(true, disposables);
+      mDelegate = delegate;
+      if (delegate instanceof Disposable) {
+        getListOrThrow().add(0, (Disposable) delegate);
       }
-      synchronized (this) {
-        mDisposables.addAll(disposables);
-      }
-    }
-
-    @Override
-    public boolean flushDisposed() {
-      synchronized (this) {
-        if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegateOrNull())) {
-          dispose();
-          return true;
-        }
-        return false;
-      }
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      mDisposables.dispose();
     }
 
     @Override
     public void addListener(Runnable listener, Executor executor) {
       synchronized (this) {
-        getDelegateOrThrow().addListener(
-            mDisposables.add(Disposables.runnable(listener)),
-            executor);
+        DisposableRunnable runnable = Disposables.runnable(listener);
+        getListOrThrow().add(runnable);
+        mDelegate.addListener(runnable, executor);
       }
     }
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-      return getDelegateOrThrow().cancel(mayInterruptIfRunning);
+      return mDelegate.cancel(mayInterruptIfRunning);
     }
 
     @Override
     public boolean isCancelled() {
-      return getDelegateOrThrow().isCancelled();
+      return mDelegate.isCancelled();
     }
 
     @Override
     public boolean isDone() {
-      return getDelegateOrThrow().isDone();
+      return mDelegate.isDone();
     }
 
     @Override
     public V get() throws InterruptedException, ExecutionException {
-      return getDelegateOrThrow().get();
+      return mDelegate.get();
     }
 
     @Override
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return getDelegateOrThrow().get(timeout, unit);
-    }
-
-    private static boolean flushObjectIfNeeded(@Nullable Object object) {
-      if (object instanceof HasDisposables) {
-        return ((HasDisposables) object).flushDisposed();
-      }
-      return true;
+      return mDelegate.get(timeout, unit);
     }
   }
 }
