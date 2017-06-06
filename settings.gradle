@@ -1,1 +1,1 @@
-include ':disposables-core', ':disposable-futures'
+include ':disposables-core', ':disposable-futures', ':pausables-core'
