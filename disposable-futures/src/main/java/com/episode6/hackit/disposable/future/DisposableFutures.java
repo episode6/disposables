@@ -1,6 +1,8 @@
 package com.episode6.hackit.disposable.future;
 
 import com.episode6.hackit.disposable.*;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -65,6 +67,52 @@ public class DisposableFutures {
     DisposableFuture<T> disposableFuture = wrap(future);
     Futures.addCallback(disposableFuture, callback, executor);
     return disposableFuture;
+  }
+
+  /**
+   * Wraps the input ListenableFuture in a {@link DisposableFuture} (if it does not already implement disposable),
+   * then applies the transform function and wraps the result in a new {@link DisposableFuture} (attaching the
+   * disposable input future in the process).
+   * @param input The {@link ListenableFuture} to transform
+   * @param transform The {@link Function} that transforms input
+   * @param executor The executor to execute the transformation on.
+   * @param <I> The input type
+   * @param <O> The output type
+   * @return A new {@link DisposableFuture} wrapping the transformed future, and with the input disposable attached.
+   */
+  public static <I, O> DisposableFuture<O> transformAndWrap(
+      ListenableFuture<I> input,
+      Function<I, O> transform,
+      Executor executor) {
+    if (input instanceof Disposable) {
+      return wrap(
+          Futures.transform(input, transform, executor),
+          (Disposable)input);
+    }
+    return transformAndWrap(wrap(input), transform, executor);
+  }
+
+  /**
+   * Wraps the input ListenableFuture in a {@link DisposableFuture} (if it does not already implement disposable),
+   * then applies the transform function and wraps the result in a new {@link DisposableFuture} (attaching the
+   * disposable input future in the process).
+   * @param input The {@link ListenableFuture} to transform
+   * @param transform The {@link AsyncFunction} that transforms input
+   * @param executor The executor to execute the transformation on.
+   * @param <I> The input type
+   * @param <O> The output type
+   * @return A new {@link DisposableFuture} wrapping the transformed future, and with the input disposable attached.
+   */
+  public static <I, O> DisposableFuture<O> transformAsyncAndWrap(
+      ListenableFuture<I> input,
+      AsyncFunction<I, O> transform,
+      Executor executor) {
+    if (input instanceof Disposable) {
+      return wrap(
+          Futures.transformAsync(input, transform, executor),
+          (Disposable)input);
+    }
+    return transformAsyncAndWrap(wrap(input), transform, executor);
   }
 
   private static class DelegateDisposableFuture<V> extends ForgetfulDelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {

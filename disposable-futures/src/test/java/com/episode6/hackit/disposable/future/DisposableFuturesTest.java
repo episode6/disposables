@@ -3,17 +3,19 @@ package com.episode6.hackit.disposable.future;
 import com.episode6.hackit.disposable.CheckedDisposable;
 import com.episode6.hackit.disposable.Disposable;
 import com.episode6.hackit.disposable.HasDisposables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import javax.annotation.Nullable;
+import java.util.concurrent.ExecutionException;
+
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.fest.assertions.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 public class DisposableFuturesTest {
@@ -184,5 +186,130 @@ public class DisposableFuturesTest {
     verify(mFutureCallback).onSuccess(true);
     assertThat(isDisposed1).isFalse();
     assertThat(isDisposed2).isTrue();
+  }
+
+  @Test
+  public void testFutureTransform() throws ExecutionException, InterruptedException {
+    DisposableFuture<Integer> intFuture = DisposableFutures.transformAndWrap(
+        mSettableFuture,
+        transformFunction(),
+        MoreExecutors.directExecutor());
+
+    assertThat(intFuture.flushDisposed()).isFalse();
+
+    mSettableFuture.set(true);
+
+    assertThat(intFuture.get()).isEqualTo(1);
+
+    assertThat(intFuture.flushDisposed()).isTrue();
+  }
+
+  @Test
+  public void testFutureAsyncTransform() throws ExecutionException, InterruptedException {
+    DisposableFuture<Integer> intFuture = DisposableFutures.transformAsyncAndWrap(
+        mSettableFuture,
+        asyncTransformFunction(),
+        MoreExecutors.directExecutor());
+
+    assertThat(intFuture.flushDisposed()).isFalse();
+
+    mSettableFuture.set(true);
+
+    assertThat(intFuture.get()).isEqualTo(1);
+
+    assertThat(intFuture.flushDisposed()).isTrue();
+  }
+
+  @Test
+  public void testFutureDoesntTransformIfDisposed() {
+    final DisposableFuture<Integer> intFuture = DisposableFutures.transformAndWrap(
+        mSettableFuture,
+        transformFunction(),
+        MoreExecutors.directExecutor());
+    Futures.addCallback(
+        intFuture,
+        failingCallback(),
+        MoreExecutors.directExecutor());
+
+    assertThat(intFuture.flushDisposed()).isFalse();
+    intFuture.dispose();
+    mSettableFuture.set(true);
+    expectException(IllegalStateException.class, new ThrowRunnable() {
+      @Override
+      public void run() throws Throwable {
+        intFuture.get();
+      }
+    });
+  }
+
+  @Test
+  public void testFutureDoesntAsyncTransformIfDisposed() {
+    final DisposableFuture<Integer> intFuture = DisposableFutures.transformAsyncAndWrap(
+        mSettableFuture,
+        asyncTransformFunction(),
+        MoreExecutors.directExecutor());
+    Futures.addCallback(
+        intFuture,
+        failingCallback(),
+        MoreExecutors.directExecutor());
+
+    assertThat(intFuture.flushDisposed()).isFalse();
+    intFuture.dispose();
+    mSettableFuture.set(true);
+    expectException(IllegalStateException.class, new ThrowRunnable() {
+      @Override
+      public void run() throws Throwable {
+        intFuture.get();
+      }
+    });
+  }
+
+  interface ThrowRunnable {
+    void run() throws Throwable;
+  }
+
+  private static void expectException(Class<? extends Throwable> clazz, ThrowRunnable runnable) {
+    try {
+      runnable.run();
+    } catch (Throwable t) {
+      if (clazz.isInstance(t)) {
+        return;
+      }
+      fail("Expected throwable: " + clazz + " but instead got: " + t);
+    }
+    fail("Expected throwable: " + clazz);
+  }
+
+  private static Function<Boolean, Integer> transformFunction() {
+    return new Function<Boolean, Integer>() {
+      @Nullable
+      @Override
+      public Integer apply(@Nullable Boolean input) {
+        return input == null || !input ? 0 : 1;
+      }
+    };
+  }
+
+  private static AsyncFunction<Boolean, Integer> asyncTransformFunction() {
+    return new AsyncFunction<Boolean, Integer>() {
+      @Override
+      public ListenableFuture<Integer> apply(@Nullable Boolean input) throws Exception {
+        return Futures.immediateFuture(input == null || !input ? 0 : 1);
+      }
+    };
+  }
+
+  private static <T> FutureCallback<T> failingCallback() {
+    return new FutureCallback<T>() {
+      @Override
+      public void onSuccess(@Nullable T result) {
+        fail("callback success should not execute");
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        fail("callback failure should not execute", t);
+      }
+    };
   }
 }
