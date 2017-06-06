@@ -48,6 +48,10 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
    */
   @SuppressWarnings("unchecked")
   public void addAll(V... objs) {
+    if (objs.length <= 0) {
+      return;
+    }
+
     synchronized (this) {
       Collections.addAll(getListOrThrow(), objs);
     }
