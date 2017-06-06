@@ -16,7 +16,7 @@ dependencies {
 ### What / Why?
 Disposables is a concept I've found myself coming back to a couple of times now, so I figured I'd try to formalize it. The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects/services in one place. As well as help you avoid holding references to objects purely so they may be cleaned up at some point.
 
-At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a root `DisposableCollection`, and when it's time to tear town the app/component/lifecycle, simply call `disposableCollection.dispose()` to tear down everything in one method call.
+At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `RootDisposableCollection`, and when it's time to tear town the app/component/lifecycle, simply call `collection.dispose()` to tear down everything in one method call.
 
 Lets take a look at this simple Android Activity and see how disposables can help. Here you can see our activity holds references to a SqlConnection, a Service and a Service.Listener. All of them are created/setup in onCreate() and any one of them will trigger a memory leak if we forget to tear them down in onDestroy().
 ```java
@@ -66,7 +66,7 @@ Now lets see what the same class looks like using Disposables to handle the tear
 // With Disposables (pseuso-code)
 public class MyActivity extends Activity {
 
-  private final DisposableCollection mDisposables = DisposableCollection.createUnFlushable();
+  private final RootDisposableCollection mDisposables = RootDisposableCollection.create();
 
   private SqlConnection mSqlConnection;
 

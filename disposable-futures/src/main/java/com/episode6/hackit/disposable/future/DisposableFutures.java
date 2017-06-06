@@ -6,6 +6,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +33,7 @@ public class DisposableFutures {
     }
     return new DelegateDisposableFuture<T>(
         future,
-        DisposableCollection.createFlushable(disposables));
+        disposables.length == 0 ? null : Arrays.asList(disposables));
   }
 
   /**
@@ -64,11 +66,11 @@ public class DisposableFutures {
 
   private static class DelegateDisposableFuture<V> extends ForgetfulDelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
 
-    private final DisposableCollection mDisposables;
+    private final ForgetfulDisposableCollection<Disposable> mDisposables;
 
-    DelegateDisposableFuture(ListenableFuture<V> delegate, DisposableCollection collection) {
+    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<Disposable> disposables) {
       super(delegate);
-      mDisposables = collection;
+      mDisposables = new ForgetfulDisposableCollection<>(true, disposables);
     }
 
     void addDisposables(Disposable... disposables) {
