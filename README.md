@@ -158,7 +158,7 @@ Then our activity looks more like this...
 ### Managing Memory
 So far we've only created disposables for objects that are expected to exist for the entire life of our app/component/lifecycle, but you may want to use disposables to clean up temporary objects too. For this we've got `CheckedDisposable`, an extension to the Disposable interface that adds the method `boolean isDisposed()`. This allows a RootDisposableCollection to occasionally flush references to CheckedDisposables if they are already disposed.
 
-For an example of CheckedDisposable, consider an activity that shows a dialog when the user clicks a button. A dialog can could be disposed by the user dismissing it, but if it's not and we leave it attached when the application exits, we've leaked memory. So lets create a CheckedDisposable for it.
+For an example of CheckedDisposable, consider an activity that shows a dialog when the user clicks a button. A dialog could be disposed by the user dismissing it, but if it's not and we leave it attached when the application exits, we've leaked memory. So lets create a CheckedDisposable for it.
 ```java
 static CheckedDisposable dialogDisposable(final Dialog dialog) {
   return new CheckedDisposable() {
