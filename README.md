@@ -3,13 +3,13 @@ An experimental java library for dealing with objects that need to be disposed.
 
 ### Installataion
 ```groovy
-repositories { maven { url "https://oss.sonatype.org/content/repositories/snapshots/" } }
+repositories { jcenter() }
 dependencies {
     // core module
-    compile 'com.episode6.hackit.disposable:disposables-core:0.0.1-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposables-core:0.0.1'
 
     // disposable support for listenable futures
-    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.1-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.1'
 }
 ```
 
