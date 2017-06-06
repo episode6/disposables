@@ -40,7 +40,7 @@ public class DisposablesTest {
     }
   }
 
-  static class ObjDisposeChecker implements DisposeChecker<ObjWithCleanup> {
+  static class CheckedObjDisposer extends ObjDisposer implements CheckedDisposer<ObjWithCleanup> {
 
     @Override
     public boolean isInstanceDisposed(ObjWithCleanup instance) {
@@ -51,244 +51,185 @@ public class DisposablesTest {
   interface RunnableWithDispose extends CheckedDisposable, Runnable {}
 
   @Mock ObjWithCleanup mObjWithCleanup;
-  @Mock WeakReference<ObjWithCleanup> mWeakReference;
+  @Mock WeakReference<ObjWithCleanup> mWeakObjWithCleanup;
   @Mock Runnable mRunnable;
   @Mock RunnableWithDispose mRunnableWithDispose;
 
+  @Mock WeakReference<Disposable> mWeakDisposable;
+  @Mock WeakReference<CheckedDisposable> mWeakCheckedDisposable;
   @Mock Disposable mMockDisposable;
   @Mock CheckedDisposable mMockCheckedDisposable;
 
   @Before
   public void setup() throws Exception {
-    whenNew(WeakReference.class).withArguments(mObjWithCleanup).thenReturn(mWeakReference);
-  }
-
-  @Test
-  public void testSimpleDisposable() {
-    Disposable disposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
-
-    disposable.dispose();
-
-    verify(mObjWithCleanup).cleanup();
-    verifyNoMoreInteractions(mObjWithCleanup);
-  }
-
-  @Test
-  public void testDisposalCheck() {
-    when(mObjWithCleanup.isCleanedUp()).thenReturn(true);
-    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
-
-    boolean isDisposed = disposable.isDisposed();
-
-    verify(mObjWithCleanup).isCleanedUp();
-    verifyNoMoreInteractions(mObjWithCleanup);
-    assertThat(isDisposed).isTrue();
-  }
-
-  @Test
-  public void testDisposalCheckOnDisposeWhenAlreadyDisposed() {
-    when(mObjWithCleanup.isCleanedUp()).thenReturn(true);
-    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
-
-    disposable.dispose();
-
-    verify(mObjWithCleanup).isCleanedUp();
-    verifyNoMoreInteractions(mObjWithCleanup);
-  }
-
-  @Test
-  public void testDisposalCheckOnDisposeWhenNotDisposed() {
-    when(mObjWithCleanup.isCleanedUp()).thenReturn(false);
-    CheckedDisposable disposable = Disposables.createChecked(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
-
-    disposable.dispose();
-
-    verify(mObjWithCleanup).isCleanedUp();
-    verify(mObjWithCleanup).cleanup();
-    verifyNoMoreInteractions(mObjWithCleanup);
-  }
-
-  @Test
-  public void testDisposableOfDisposable() {
-    Disposable firstDisposable = Disposables.create(mObjWithCleanup, new ObjDisposer());
-
-    Disposer secondDisposer = mock(Disposer.class);
-    Disposable secondDisposable = Disposables.create(firstDisposable, secondDisposer);
-
-    secondDisposable.dispose();
-    verify(secondDisposer).disposeInstance(firstDisposable);
-    verify(mObjWithCleanup).cleanup();  // ensures our first disposable gets called through even though
-                                        // our 2nd disposer is empty
-    verifyNoMoreInteractions(secondDisposer, mObjWithCleanup);
+    whenNew(WeakReference.class).withArguments(mObjWithCleanup).thenReturn(mWeakObjWithCleanup);
+    whenNew(WeakReference.class).withArguments(mMockDisposable).thenReturn(mWeakDisposable);
+    whenNew(WeakReference.class).withArguments(mMockCheckedDisposable).thenReturn(mWeakCheckedDisposable);
   }
 
   @Test
   public void testWrapRawDisposable() {
+    when(mWeakDisposable.get()).thenReturn(mMockDisposable);
     Disposer mockDisposer = mock(Disposer.class);
-    Disposable wrapper = Disposables.create(mMockDisposable, mockDisposer);
+    Disposable wrapper = Disposables.weak(mMockDisposable, mockDisposer);
 
     wrapper.dispose();
 
+    verify(mWeakDisposable).get();
     verify(mockDisposer).disposeInstance(mMockDisposable);
     verify(mMockDisposable).dispose();
-    verifyNoMoreInteractions(mMockDisposable, mockDisposer);
-  }
-
-  @Test
-  public void testWrapRawCheckedDisposableIsChecked() {
-    Disposer mockDisposer = mock(Disposer.class);
-    Disposable wrapper = Disposables.create(mMockCheckedDisposable, mockDisposer);
-
-    assertThat(wrapper).isInstanceOf(CheckedDisposable.class);
-    boolean isDisposed = ((CheckedDisposable)wrapper).isDisposed();
-
-    verify(mMockCheckedDisposable).isDisposed();
-    verifyNoMoreInteractions(mMockCheckedDisposable);
-    assertThat(isDisposed).isFalse();
+    verify(mWeakDisposable).clear();
+    verifyNoMoreInteractions(mMockDisposable, mockDisposer, mWeakDisposable);
   }
 
   @Test
   public void testWrapRawCheckedDisposableIsDisposedCheckBoth() {
-    Disposer mockDisposer = mock(Disposer.class);
-    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
-    when(mockDisposeChecker.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
-    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    when(mWeakCheckedDisposable.get()).thenReturn(mMockCheckedDisposable);
+    CheckedDisposer mockDisposer = mock(CheckedDisposer.class);
+    when(mockDisposer.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
+    CheckedDisposable wrapper = Disposables.weak(mMockCheckedDisposable, mockDisposer);
 
     boolean isDisposed = wrapper.isDisposed();
 
+    verify(mWeakCheckedDisposable).get();
     verify(mMockCheckedDisposable).isDisposed();
-    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
-    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
+    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
     assertThat(isDisposed).isFalse();
   }
 
   @Test
   public void testWrapRawCheckedDisposableIsDisposedTrue() {
-    Disposer mockDisposer = mock(Disposer.class);
-    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
-    when(mockDisposeChecker.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
+    when(mWeakCheckedDisposable.get()).thenReturn(mMockCheckedDisposable);
+    CheckedDisposer mockDisposer = mock(CheckedDisposer.class);
+    when(mockDisposer.isInstanceDisposed(mMockCheckedDisposable)).thenReturn(true);
     when(mMockCheckedDisposable.isDisposed()).thenReturn(true);
-    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    CheckedDisposable wrapper = Disposables.weak(mMockCheckedDisposable, mockDisposer);
 
     boolean isDisposed = wrapper.isDisposed();
 
+    verify(mWeakCheckedDisposable).get();
     verify(mMockCheckedDisposable).isDisposed();
-    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
-    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
+    verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
     assertThat(isDisposed).isTrue();
   }
 
   @Test
   public void testWrapRawCheckedDisposableDisposed() {
-    Disposer mockDisposer = mock(Disposer.class);
-    DisposeChecker mockDisposeChecker = mock(DisposeChecker.class);
-    CheckedDisposable wrapper = Disposables.createChecked(mMockCheckedDisposable, mockDisposer, mockDisposeChecker);
+    when(mWeakCheckedDisposable.get()).thenReturn(mMockCheckedDisposable);
+    CheckedDisposer mockDisposer = mock(CheckedDisposer.class);
+    CheckedDisposable wrapper = Disposables.weak(mMockCheckedDisposable, mockDisposer);
 
     wrapper.dispose();
 
-    verify(mockDisposeChecker).isInstanceDisposed(mMockCheckedDisposable);
+    verify(mWeakCheckedDisposable).get();
+    verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verify(mockDisposer).disposeInstance(mMockCheckedDisposable);
     verify(mMockCheckedDisposable).dispose();
-    verifyNoMoreInteractions(mockDisposer, mockDisposeChecker, mMockCheckedDisposable);
+    verify(mWeakCheckedDisposable).clear();
+    verifyNoMoreInteractions(mockDisposer, mMockCheckedDisposable, mWeakCheckedDisposable);
   }
 
   @Test
   public void testWeakDisposableNoRef() {
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new ObjDisposer());
 
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isTrue();
-    verify(mWeakReference).get();
-    verifyNoMoreInteractions(mWeakReference);
+    verify(mWeakObjWithCleanup).get();
+    verifyNoMoreInteractions(mWeakObjWithCleanup);
   }
 
   @Test
   public void testWeakDisposableWithRef() {
-    when(mWeakReference.get()).thenReturn(mObjWithCleanup);
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
+    when(mWeakObjWithCleanup.get()).thenReturn(mObjWithCleanup);
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new ObjDisposer());
 
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isFalse();
-    verify(mWeakReference).get();
-    verifyNoMoreInteractions(mWeakReference);
+    verify(mWeakObjWithCleanup).get();
+    verifyNoMoreInteractions(mWeakObjWithCleanup);
   }
 
   @Test
   public void testDisposalOfWeakDisposableWithRef() {
-    when(mWeakReference.get()).thenReturn(mObjWithCleanup);
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
+    when(mWeakObjWithCleanup.get()).thenReturn(mObjWithCleanup);
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new ObjDisposer());
 
     disposable.dispose();
 
-    verify(mWeakReference).get();
+    verify(mWeakObjWithCleanup).get();
     verify(mObjWithCleanup).cleanup();
-    verify(mWeakReference).clear();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verify(mWeakObjWithCleanup).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
   public void testDisposalOfWeakDisposableNoRef() {
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer());
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new ObjDisposer());
 
     disposable.dispose();
 
-    verify(mWeakReference).get();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verify(mWeakObjWithCleanup).get();
+    verify(mWeakObjWithCleanup).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
   public void testWeakCheckedDisposableNoRef() {
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new CheckedObjDisposer());
 
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isTrue();
-    verify(mWeakReference).get();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verify(mWeakObjWithCleanup).get();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
   public void testWeakCheckedDisposableWithRef() {
-    when(mWeakReference.get()).thenReturn(mObjWithCleanup);
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    when(mWeakObjWithCleanup.get()).thenReturn(mObjWithCleanup);
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new CheckedObjDisposer());
 
     boolean isDisposed = disposable.isDisposed();
 
     assertThat(isDisposed).isFalse();
-    verify(mWeakReference).get();
+    verify(mWeakObjWithCleanup).get();
     verify(mObjWithCleanup).isCleanedUp();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
   public void testDisposalOfWeakCheckdDisposableWithRef() {
-    when(mWeakReference.get()).thenReturn(mObjWithCleanup);
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+    when(mWeakObjWithCleanup.get()).thenReturn(mObjWithCleanup);
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new CheckedObjDisposer());
 
     disposable.dispose();
 
-    verify(mWeakReference).get();
+    verify(mWeakObjWithCleanup).get();
     verify(mObjWithCleanup).isCleanedUp();
     verify(mObjWithCleanup).cleanup();
-    verify(mWeakReference).clear();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verify(mWeakObjWithCleanup).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
-  public void testDisposalOfWeakCheckedDisposableWNoRef() {
-    CheckedDisposable disposable = Disposables.createWeak(mObjWithCleanup, new ObjDisposer(), new ObjDisposeChecker());
+  public void testDisposalOfWeakCheckedDisposableNoRef() {
+    CheckedDisposable disposable = Disposables.weak(mObjWithCleanup, new CheckedObjDisposer());
 
     disposable.dispose();
 
-    verify(mWeakReference).get();
-    verifyNoMoreInteractions(mObjWithCleanup, mWeakReference);
+    verify(mWeakObjWithCleanup).get();
+    verify(mWeakObjWithCleanup).clear();
+    verifyNoMoreInteractions(mObjWithCleanup, mWeakObjWithCleanup);
   }
 
   @Test
   public void testRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
@@ -300,7 +241,7 @@ public class DisposablesTest {
 
   @Test
   public void testRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -312,7 +253,7 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
@@ -325,7 +266,7 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -339,11 +280,37 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableCheck() {
-    DisposableRunnable disposableRunnable = Disposables.createRunnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
 
     disposableRunnable.isDisposed();
 
     verify(mRunnableWithDispose).isDisposed();
     verifyNoMoreInteractions(mRunnableWithDispose);
+  }
+
+  @Test
+  public void testForgetfulWrapIgnored() {
+    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<>(mObjWithCleanup);
+
+    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
+
+    assertThat(wrapper).isEqualTo(originalDisposable);
+  }
+
+  @Test
+  public void testForgetfulWrapNotIgnored() {
+    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<Object>(mMockCheckedDisposable) {};
+
+    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
+
+    assertThat(wrapper).isNotEqualTo(originalDisposable);
+
+    boolean isDisposed = wrapper.isDisposed();
+
+    verify(mMockCheckedDisposable).isDisposed();
+
+    wrapper.dispose();
+
+    verify(mMockCheckedDisposable).isDisposed();
   }
 }

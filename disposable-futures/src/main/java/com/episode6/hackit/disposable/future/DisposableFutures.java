@@ -6,6 +6,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -26,14 +28,12 @@ public class DisposableFutures {
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      if (disposables.length > 0) {
-        ((DelegateDisposableFuture) future).mDisposables.addAll(disposables);
-      }
+      ((DelegateDisposableFuture) future).addDisposables(disposables);
       return (DisposableFuture<T>) future;
     }
     return new DelegateDisposableFuture<T>(
         future,
-        DisposableCollection.createFlushable(disposables));
+        disposables.length == 0 ? null : Arrays.asList(disposables));
   }
 
   /**
@@ -64,22 +64,33 @@ public class DisposableFutures {
     return disposableFuture;
   }
 
-  private static class DelegateDisposableFuture<V> extends DelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
+  private static class DelegateDisposableFuture<V> extends ForgetfulDelegateDisposable<ListenableFuture<V>> implements DisposableFuture<V> {
 
-    private final DisposableCollection mDisposables;
+    private final ForgetfulDisposableCollection<Disposable> mDisposables;
 
-    DelegateDisposableFuture(ListenableFuture<V> delegate, DisposableCollection collection) {
+    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<Disposable> disposables) {
       super(delegate);
-      mDisposables = collection;
+      mDisposables = new ForgetfulDisposableCollection<>(true, disposables);
+    }
+
+    void addDisposables(Disposable... disposables) {
+      if (disposables.length <= 0) {
+        return;
+      }
+      synchronized (this) {
+        mDisposables.addAll(disposables);
+      }
     }
 
     @Override
     public boolean flushDisposed() {
-      if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegate())) {
-        dispose();
-        return true;
+      synchronized (this) {
+        if (mDisposables.flushDisposed() && flushObjectIfNeeded(getDelegateOrNull())) {
+          dispose();
+          return true;
+        }
+        return false;
       }
-      return false;
     }
 
     @Override
@@ -90,9 +101,11 @@ public class DisposableFutures {
 
     @Override
     public void addListener(Runnable listener, Executor executor) {
-      getDelegateOrThrow().addListener(
-          mDisposables.add(Disposables.createRunnable(listener)),
-          executor);
+      synchronized (this) {
+        getDelegateOrThrow().addListener(
+            mDisposables.add(Disposables.runnable(listener)),
+            executor);
+      }
     }
 
     @Override
@@ -118,14 +131,6 @@ public class DisposableFutures {
     @Override
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       return getDelegateOrThrow().get(timeout, unit);
-    }
-
-    ListenableFuture<V> getDelegateOrThrow() {
-      ListenableFuture<V> delegate = getDelegate();
-      if (delegate == null) {
-        throw new NullPointerException("Attempting to interact with DisposableFuture after its been disposed.");
-      }
-      return delegate;
     }
 
     private static boolean flushObjectIfNeeded(@Nullable Object object) {

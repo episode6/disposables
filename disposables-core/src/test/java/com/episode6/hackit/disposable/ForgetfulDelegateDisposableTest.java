@@ -14,9 +14,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 
 /**
- * Tests {@link DelegateDisposable}
+ * Tests {@link ForgetfulDelegateDisposable}
  */
-public class DelegateDisposableTest {
+public class ForgetfulDelegateDisposableTest {
 
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
@@ -26,7 +26,7 @@ public class DelegateDisposableTest {
 
   @Test
   public void testDisposeRandomObject() throws NoSuchFieldException, IllegalAccessException {
-    DelegateDisposable disposable = new DelegateDisposable<>(mRandomObject);
+    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mRandomObject);
 
     disposable.dispose();
 
@@ -36,7 +36,7 @@ public class DelegateDisposableTest {
 
   @Test
   public void testDisposeDisposable() throws NoSuchFieldException, IllegalAccessException {
-    DelegateDisposable disposable = new DelegateDisposable<>(mDisposable);
+    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mDisposable);
 
     disposable.dispose();
 
@@ -47,7 +47,7 @@ public class DelegateDisposableTest {
 
   @Test
   public void testDisposeDisposableMulti() throws NoSuchFieldException, IllegalAccessException {
-    DelegateDisposable disposable = new DelegateDisposable<>(mDisposable);
+    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mDisposable);
 
     disposable.dispose();
     disposable.dispose();
@@ -61,7 +61,7 @@ public class DelegateDisposableTest {
 
   @Test
   public void testDisposeCheckedDisposable() throws NoSuchFieldException, IllegalAccessException {
-    DelegateDisposable disposable = new DelegateDisposable<>(mCheckedDisposable);
+    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mCheckedDisposable);
 
     disposable.dispose();
 
@@ -71,11 +71,11 @@ public class DelegateDisposableTest {
   }
 
   // yes, this is testing implementation, but forgetting its reference is part
-  // of the DelegateDisposable's contract, so its worth testing
-  private void verifyDelegateIsNull(DelegateDisposable delegateDisposable)
+  // of the ForgetfulDelegateDisposable's contract, so its worth testing
+  private void verifyDelegateIsNull(ForgetfulDelegateDisposable forgetfulDelegateDisposable)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = DelegateDisposable.class.getDeclaredField("mDelegate");
+    Field field = ForgetfulDelegateDisposable.class.getDeclaredField("mDelegate");
     field.setAccessible(true);
-    assertThat(field.get(delegateDisposable)).isNull();
+    assertThat(field.get(forgetfulDelegateDisposable)).isNull();
   }
 }

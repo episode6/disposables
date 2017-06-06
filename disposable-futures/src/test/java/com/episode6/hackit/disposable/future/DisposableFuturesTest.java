@@ -75,7 +75,7 @@ public class DisposableFuturesTest {
     assertThat(isDisposed).isTrue();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalStateException.class)
   public void testThrowAfterDispose() {
     DisposableFuture<Boolean> disposableFuture = DisposableFutures.wrap(mSettableFuture);
 
@@ -84,7 +84,7 @@ public class DisposableFuturesTest {
     disposableFuture.isDone();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalStateException.class)
   public void testThrowAfterSuccessfulFlush() {
     DisposableFuture<Boolean> disposableFuture = DisposableFutures.wrap(mSettableFuture);
 

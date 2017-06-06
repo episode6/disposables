@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  *
  * A disposable future will mark itself disposed when {@link #flushDisposed()} is called
  * if there are no disposables in its internal collection. For this reason it's vital
- * that you only add it to a {@link com.episode6.hackit.disposable.DisposableCollection}
+ * that you only add it to a {@link com.episode6.hackit.disposable.RootDisposableCollection}
  * AFTER you've finished adding listeners / callbacks to it.
  */
 public interface DisposableFuture<V> extends ListenableFuture<V>, HasDisposables {
