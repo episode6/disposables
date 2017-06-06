@@ -141,16 +141,12 @@ public class DisposableFuturesTest {
   }
 
   @Test
-  public void testWrapNonStandardDisposableFutureSuccessfulFlush() {
+  public void testDontWrapNonStandardDisposableFuture() {
     when(mMockDisposableFuture.flushDisposed()).thenReturn(true);
+
     DisposableFuture<Boolean> disposableFuture = DisposableFutures.wrap(mMockDisposableFuture);
 
-    boolean isDisposed = disposableFuture.flushDisposed();
-
-    verify(mMockDisposableFuture).flushDisposed();
-    verify(mMockDisposableFuture).dispose();
-    verifyNoMoreInteractions(mMockDisposableFuture);
-    assertThat(isDisposed).isTrue();
+    assertThat(disposableFuture).isEqualTo(mMockDisposableFuture);
   }
 
   @Test

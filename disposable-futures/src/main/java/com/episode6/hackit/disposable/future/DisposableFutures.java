@@ -24,11 +24,14 @@ public class DisposableFutures {
    * @param future The future to wrap
    * @param disposables {@link Disposable}s to be included in the DisposableFuture
    * @param <T> The type of future being wrapped
-   * @return a new {@link DisposableFuture}
+   * @return a {@link DisposableFuture} with the included disposables attached
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
     if (future instanceof DelegateDisposableFuture) {
       ((DelegateDisposableFuture) future).addDisposables(disposables);
+      return (DisposableFuture<T>) future;
+    }
+    if (future instanceof DisposableFuture && disposables.length == 0) {
       return (DisposableFuture<T>) future;
     }
     return new DelegateDisposableFuture<T>(
