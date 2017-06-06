@@ -26,9 +26,7 @@ public class DisposableFutures {
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      if (disposables.length > 0) {
-        ((DelegateDisposableFuture) future).mDisposables.addAll(disposables);
-      }
+      ((DelegateDisposableFuture) future).addDisposables(disposables);
       return (DisposableFuture<T>) future;
     }
     return new DelegateDisposableFuture<T>(
@@ -71,6 +69,15 @@ public class DisposableFutures {
     DelegateDisposableFuture(ListenableFuture<V> delegate, DisposableCollection collection) {
       super(delegate);
       mDisposables = collection;
+    }
+
+    void addDisposables(Disposable... disposables) {
+      if (disposables.length <= 0) {
+        return;
+      }
+      synchronized (this) {
+        mDisposables.addAll(disposables);
+      }
     }
 
     @Override
