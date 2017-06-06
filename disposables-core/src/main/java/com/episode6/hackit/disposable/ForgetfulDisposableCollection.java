@@ -32,14 +32,11 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
   /**
    * Add an object to the collection.
    * @param obj The object to add
-   * @param <T> The type of object being added.
-   * @return obj as a convenience so this method may be in-lined.
    */
-  public <T extends V> T add(T obj) {
+  public void add(V obj) {
     synchronized (this) {
       getListOrThrow().add(obj);
     }
-    return obj;
   }
 
   /**
