@@ -204,3 +204,6 @@ static CheckedDisposable dialogDisposable(Dialog dialog) {
 ```
 
 There is also a `HasDisposables` interface which also extends `Disposable` and adds the method `boolean flushDisposed()` (RootDisposableCollection implements HasDisposables). HasDisposables are treated just like CheckedDisposables (in a disposable collection) where if `flushDisposed()` returns true, the object is considered disposed and it's removed from the collection. The only real difference between `CheckedDisposable` and `HasDisposables` is the implied contract of what their respective methods do/don't do.
+
+### Disposable Futures
+The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It works by implementing `HasDisposables` and maintaining its own internal collection of disposables. Whenever a listener is added to it, the Runnable is wrapped in a DisposableRunnable and added to the internal collection before being added to the underlying future. This allows the DisposableFuture to effectively cancel all its callbacks upon disposal and release those references. See the [DisposableFutures](disposable-futures/src/main/java/com/episode6/hackit/disposable/future/DisposableFutures.java) class for available utility methods for working with DisposableFutures.
