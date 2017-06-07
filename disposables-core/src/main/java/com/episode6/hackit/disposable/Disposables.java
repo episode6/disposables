@@ -36,17 +36,14 @@ public class Disposables {
   /**
    * Creates a {@link DisposableRunnable} out of the provided {@link Runnable}. The resulting
    * DisposableRunnable will only allow its delegate to execute once before marking itself disposed.
-   * If the DisposableRunnable is disposed before being executed, the delegate runnable will not
+   * If the runnable is disposed before being executed, the delegate singleUseRunnable will not
    * execute at all.
    *
    * @param runnable The {@link Runnable} to wrap as a disposable.
    * @return A new {@link DisposableRunnable}
    */
-  public static DisposableRunnable runnable(Runnable runnable) {
-    if (runnable instanceof DisposableRunnable) {
-      return (DisposableRunnable) runnable;
-    }
-    return new DelegateDisposableRunnable(runnable);
+  public static DisposableRunnable singleUseRunnable(Runnable runnable) {
+    return new SingleUseRunnable(runnable);
   }
 
   private static class WeakDisposableComponents<V> implements CheckedDisposable {
@@ -76,9 +73,9 @@ public class Disposables {
     }
   }
 
-  private static class DelegateDisposableRunnable extends ForgetfulDelegateCheckedDisposable<Runnable> implements DisposableRunnable {
+  private static class SingleUseRunnable extends ForgetfulDelegateCheckedDisposable<Runnable> implements DisposableRunnable {
 
-    DelegateDisposableRunnable(Runnable delegate) {
+    SingleUseRunnable(Runnable delegate) {
       super(delegate);
     }
 

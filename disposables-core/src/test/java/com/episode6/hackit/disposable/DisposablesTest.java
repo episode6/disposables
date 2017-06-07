@@ -229,7 +229,7 @@ public class DisposablesTest {
 
   @Test
   public void testRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnable);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
@@ -241,7 +241,7 @@ public class DisposablesTest {
 
   @Test
   public void testRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnable);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -253,7 +253,7 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
@@ -266,7 +266,7 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -280,7 +280,7 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableCheck() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.isDisposed();
 
