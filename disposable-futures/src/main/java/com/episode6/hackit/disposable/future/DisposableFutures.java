@@ -30,7 +30,9 @@ public class DisposableFutures {
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      ((DelegateDisposableFuture<T>) future).addAll(disposables);
+      if (disposables.length > 0) {
+        ((DelegateDisposableFuture<T>) future).addAll(Arrays.asList(disposables));
+      }
       return (DisposableFuture<T>) future;
     }
     if (future instanceof DisposableFuture && disposables.length == 0) {

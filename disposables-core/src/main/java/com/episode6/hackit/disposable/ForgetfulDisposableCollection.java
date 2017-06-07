@@ -43,14 +43,13 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
    * Add multiple objects to the collection.
    * @param objs
    */
-  @SuppressWarnings("unchecked")
-  public void addAll(V... objs) {
-    if (objs.length <= 0) {
+  public void addAll(Collection<V> objs) {
+    if (objs.isEmpty()) {
       return;
     }
 
     synchronized (this) {
-      Collections.addAll(getListOrThrow(), objs);
+      getListOrThrow().addAll(objs);
     }
   }
 
