@@ -64,12 +64,8 @@ public class Disposables {
 
     @Override
     public void dispose() {
-      final V instance = instanceRef.get();
+      MaybeDisposables.dispose(instanceRef.get(), disposer);
       instanceRef.clear();
-      if (MaybeDisposables.isDisposed(instance, disposer)) {
-        return;
-      }
-      MaybeDisposables.dispose(instance, disposer);
     }
   }
 

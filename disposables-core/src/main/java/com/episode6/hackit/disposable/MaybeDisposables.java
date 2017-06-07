@@ -17,9 +17,10 @@ public class MaybeDisposables {
   }
 
   public static <T> void dispose(@Nullable T maybeDisposable, @Nullable Disposer<T> disposer) {
-    if (maybeDisposable == null) {
+    if (isDisposed(maybeDisposable, disposer)) {
       return;
     }
+
     if (disposer != null) {
       disposer.disposeInstance(maybeDisposable);
     }
