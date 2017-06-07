@@ -287,30 +287,4 @@ public class DisposablesTest {
     verify(mRunnableWithDispose).isDisposed();
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
-
-  @Test
-  public void testForgetfulWrapIgnored() {
-    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<>(mObjWithCleanup);
-
-    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
-
-    assertThat(wrapper).isEqualTo(originalDisposable);
-  }
-
-  @Test
-  public void testForgetfulWrapNotIgnored() {
-    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<Object>(mMockCheckedDisposable) {};
-
-    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
-
-    assertThat(wrapper).isNotEqualTo(originalDisposable);
-
-    boolean isDisposed = wrapper.isDisposed();
-
-    verify(mMockCheckedDisposable).isDisposed();
-
-    wrapper.dispose();
-
-    verify(mMockCheckedDisposable).isDisposed();
-  }
 }

@@ -3,19 +3,9 @@ package com.episode6.hackit.disposable;
 import java.lang.ref.WeakReference;
 
 /**
- * Utility class containing static methods to create Disposables from non-disposables
+ * Utility class containing static methods to create Disposables.
  */
 public class Disposables {
-
-  public static <T> CheckedDisposable forgetful(T obj) {
-    // subclasses of ForgetfulDelegateCheckedDisposable might be adding variables
-    // that explicitly need to be forgotten, so check obj.getClass() instead of using
-    // obj instanceof.
-    return obj.getClass() == ForgetfulDelegateCheckedDisposable.class ?
-        (CheckedDisposable) obj :
-        new ForgetfulDelegateCheckedDisposable<T>(obj);
-  }
-
   /**
    * Create a {@link CheckedDisposable} that holds a {@link WeakReference} to the supplied instance
    * instead of a strong one. Calls to {@link CheckedDisposable#isDisposed()} will check to see if
