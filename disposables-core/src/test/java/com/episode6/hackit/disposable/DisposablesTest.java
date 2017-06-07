@@ -1,13 +1,10 @@
 package com.episode6.hackit.disposable;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -24,8 +21,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({Disposables.class}) // creates weak refs
 @RunWith(PowerMockRunner.class)
 public class DisposablesTest {
-
-  @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
   interface ObjWithCleanup {
     boolean isCleanedUp();
