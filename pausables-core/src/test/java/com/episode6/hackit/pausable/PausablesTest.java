@@ -6,7 +6,9 @@ import com.episode6.hackit.disposable.Disposer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -212,6 +214,7 @@ public class PausablesTest {
 
     pausable.pause();
 
+    verify(mCheckedDisposer).isInstanceDisposed(mTestObj);
     verify(mPauser).pauseInstance(mTestObj);
     verifyNoMoreInteractions(mTestObj, mPauser, mCheckedDisposer);
   }
@@ -223,6 +226,7 @@ public class PausablesTest {
 
     pausable.resume();
 
+    verify(mCheckedDisposer).isInstanceDisposed(mTestObj);
     verify(mPauser).resumeInstance(mTestObj);
     verifyNoMoreInteractions(mTestObj, mPauser, mCheckedDisposer);
   }
@@ -252,8 +256,21 @@ public class PausablesTest {
 
     pausable.pause();
 
+    verify(mCheckedDisposer).isInstanceDisposed(mPausable);
     verify(mPauser).pauseInstance(mPausable);
     verify(mPausable).pause();
+    verifyNoMoreInteractions(mPausable, mPauser, mCheckedDisposer);
+  }
+
+  @Test
+  public void testWeakPausablePauseWithCheckedDisposerDisposed() {
+    when(mWeakReference.get()).thenReturn(mPausable);
+    when(mCheckedDisposer.isInstanceDisposed(mPausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mPausable, mPauser, mCheckedDisposer);
+
+    pausable.pause();
+
+    verify(mCheckedDisposer).isInstanceDisposed(mPausable);
     verifyNoMoreInteractions(mPausable, mPauser, mCheckedDisposer);
   }
 
@@ -264,8 +281,21 @@ public class PausablesTest {
 
     pausable.resume();
 
+    verify(mCheckedDisposer).isInstanceDisposed(mPausable);
     verify(mPauser).resumeInstance(mPausable);
     verify(mPausable).resume();
+    verifyNoMoreInteractions(mPausable, mPauser, mCheckedDisposer);
+  }
+
+  @Test
+  public void testWeakPausableResumeWithCheckedDisposerDisposed() {
+    when(mWeakReference.get()).thenReturn(mPausable);
+    when(mCheckedDisposer.isInstanceDisposed(mPausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mPausable, mPauser, mCheckedDisposer);
+
+    pausable.resume();
+
+    verify(mCheckedDisposer).isInstanceDisposed(mPausable);
     verifyNoMoreInteractions(mPausable, mPauser, mCheckedDisposer);
   }
 
@@ -334,5 +364,121 @@ public class PausablesTest {
     verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposablePausable);
     verify(mCheckedDisposablePausable).isDisposed();
     verifyNoMoreInteractions(mPauser, mCheckedDisposablePausable, mCheckedDisposer);
+  }
+
+  @Test
+  public void testDisposablePausablePause() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser);
+
+    pausable.pause();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    inOrder.verify(mPauser).pauseInstance(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).pause();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser);
+  }
+
+  @Test
+  public void testDisposablePausablePauseDisposed() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser);
+
+    pausable.pause();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser);
+  }
+
+  @Test
+  public void testDisposablePausableResume() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser);
+
+    pausable.resume();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    inOrder.verify(mPauser).resumeInstance(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).resume();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser);
+  }
+
+  @Test
+  public void testDisposablePausableResumeDisposed() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser);
+
+    pausable.resume();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser);
+  }
+  
+  @Test
+  public void testDisposablePausableWithDisposerPause() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposer.isInstanceDisposed(mCheckedDisposablePausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+
+    pausable.pause();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+    inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    inOrder.verify(mPauser).pauseInstance(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).pause();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+  }
+
+  @Test
+  public void testDisposablePausableWithDisposerPauseDisposed() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
+    when(mCheckedDisposer.isInstanceDisposed(mCheckedDisposablePausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+
+    pausable.pause();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+    inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+  }
+
+  @Test
+  public void testDisposablePausableWithDisposerResume() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposer.isInstanceDisposed(mCheckedDisposablePausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+
+    pausable.resume();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+    inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    inOrder.verify(mPauser).resumeInstance(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).resume();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+  }
+
+  @Test
+  public void testDisposablePausableWithDisposerResumeDisposed() {
+    when(mWeakReference.get()).thenReturn(mCheckedDisposablePausable);
+    when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
+    when(mCheckedDisposer.isInstanceDisposed(mCheckedDisposablePausable)).thenReturn(true);
+    CheckedDisposablePausable pausable = Pausables.weak(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+
+    pausable.resume();
+
+    InOrder inOrder = Mockito.inOrder(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
+    inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).isDisposed();
+    verifyNoMoreInteractions(mCheckedDisposablePausable, mPauser, mCheckedDisposer);
   }
 }

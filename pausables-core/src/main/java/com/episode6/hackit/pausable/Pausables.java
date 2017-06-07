@@ -36,12 +36,18 @@ public class Pausables {
 
     @Override
     public void pause() {
-      MaybePausables.pause(mWeakReference.get(), mPauser);
+      final V instance = mWeakReference.get();
+      if (!MaybeDisposables.isDisposed(instance, mDisposer)) {
+        MaybePausables.pause(instance, mPauser);
+      }
     }
 
     @Override
     public void resume() {
-      MaybePausables.resume(mWeakReference.get(), mPauser);
+      final V instance = mWeakReference.get();
+      if (!MaybeDisposables.isDisposed(instance, mDisposer)) {
+        MaybePausables.resume(instance, mPauser);
+      }
     }
 
     @Override
