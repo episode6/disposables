@@ -129,8 +129,8 @@ public class DisposableFutures {
 
     @Override
     public void addListener(Runnable listener, Executor executor) {
+      DisposableRunnable runnable = Disposables.runnable(listener);
       synchronized (this) {
-        DisposableRunnable runnable = Disposables.runnable(listener);
         getListOrThrow().add(runnable);
         mDelegate.addListener(runnable, executor);
       }
