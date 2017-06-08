@@ -1,16 +1,10 @@
 package com.episode6.hackit.pausable;
 
-import com.episode6.hackit.disposable.Disposable;
-import com.episode6.hackit.disposable.DisposableManager;
-import com.episode6.hackit.disposable.Disposer;
-import com.episode6.hackit.disposable.MaybeDisposables;
+import com.episode6.hackit.disposable.*;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility class containing static methods to create pausables
@@ -55,7 +49,7 @@ public class Pausables {
     ConnectedPausableManager pausableManager = new ConnectedPausableManager(disposableManager);
     disposableManager.add(pausableManager);
     if (pausables.length > 0) {
-      pausableManager.addAll(Arrays.asList(pausables));
+      pausableManager.addAll(pausables);
     }
     return pausableManager;
   }
@@ -111,73 +105,93 @@ public class Pausables {
     }
   }
 
-  private static class StandalonePausableManager extends ForgetfulPausableCollection<Pausable> implements PausableManager {
-    StandalonePausableManager(@Nullable Collection<Pausable> prefill) {
-      super(false, prefill);
+  private static abstract class AbstractPausableManager extends AbstractDelegateDisposable<List<Pausable>> implements PausableManager {
+
+    public AbstractPausableManager(@Nullable Collection<Pausable> prefill) {
+      super(prefill == null ? new LinkedList<Pausable>() : new LinkedList<Pausable>(prefill));
+    }
+
+    @Override
+    public void pause() {
+      synchronized (this) {
+        MaybePausables.pauseList(getDelegateOrThrow());
+      }
+    }
+
+    @Override
+    public void resume() {
+      synchronized (this) {
+        MaybePausables.resumeList(getDelegateOrThrow());
+      }
+    }
+
+    @Override
+    public boolean flushDisposed() {
+      if (isMarkedDisposed()) {
+        return true;
+      }
+
+      synchronized (this) {
+        MaybeDisposables.flushList(getDelegateOrNull());
+        return isMarkedDisposed();
+      }
     }
   }
 
-  private static class ConnectedPausableManager extends ForgetfulPausableCollection<Pausable> implements PausableManager {
-    private @Nullable DisposableManager mDisposableManager;
-    public ConnectedPausableManager(DisposableManager disposableManager) {
-      super(false, null);
-      mDisposableManager = disposableManager;
+  private static class StandalonePausableManager extends AbstractPausableManager {
+    StandalonePausableManager(@Nullable Collection<Pausable> prefill) {
+      super(prefill);
     }
 
     @Override
-    public void add(Pausable obj) {
+    public void add(Pausable pausable) {
       synchronized (this) {
-        getListOrThrow().add(obj);
-        if (obj instanceof Disposable) {
-          getRootOrThrow().add((Disposable) obj);
-        }
-      }
-    }
-
-    @Override
-    public void addAll(Collection<Pausable> objs) {
-      if (objs.isEmpty()) {
-        return;
-      }
-      synchronized (this) {
-        getListOrThrow().addAll(objs);
-        getRootOrThrow().addAll(findDisposables(objs));
+        getDelegateOrThrow().add(pausable);
       }
     }
 
     @Override
     public void dispose() {
-      List<Pausable> list = getListOrNull();
-      if (list == null) {
-        return;
+      MaybeDisposables.disposeList(markDisposed());
+    }
+  }
+
+  private static class ConnectedPausableManager extends AbstractPausableManager {
+    private DisposableManager mDisposableManager;
+    public ConnectedPausableManager(DisposableManager disposableManager) {
+      super(null);
+      mDisposableManager = disposableManager;
+    }
+
+    // internal only method called when creating a ConnectedPausableManager - not syncronized because
+    // it may only be used before the ConnectedPausableManager is returned.
+    void addAll(Pausable[] pausables) {
+      List<Pausable> list = getDelegateOrThrow();
+      for (Pausable p : pausables) {
+        list.add(p);
+        if (p instanceof Disposable) {
+          mDisposableManager.add((Disposable) p);
+        }
       }
+    }
+
+    @Override
+    public void add(Pausable pausable) {
       synchronized (this) {
-        list = getListOrNull();
-        if (list == null) {
-          return;
-        }
-        list.clear();
-        mDisposableManager = null;
-        super.dispose();
-      }
-    }
-
-    private DisposableManager getRootOrThrow() {
-      DisposableManager collection = mDisposableManager;
-      if (collection == null) {
-        throw new NullPointerException("DisposableManager should not be null");
-      }
-      return collection;
-    }
-
-    private static List<Disposable> findDisposables(Collection<Pausable> objs) {
-      List<Disposable> disposables = new LinkedList<>();
-      for (Pausable pausable : objs) {
+        getDelegateOrThrow().add(pausable);
         if (pausable instanceof Disposable) {
-          disposables.add((Disposable) pausable);
+          mDisposableManager.add((Disposable) pausable);
         }
       }
-      return disposables;
+    }
+
+    @Override
+    public void dispose() {
+      List<Pausable> pausables = markDisposed();
+      if (pausables != null) {
+        pausables.clear();
+        mDisposableManager = null;
+      }
     }
   }
 }

@@ -1,8 +1,8 @@
 package com.episode6.hackit.pausable;
 
+import com.episode6.hackit.disposable.AbstractDelegateDisposable;
 import com.episode6.hackit.disposable.DisposableManager;
 import com.episode6.hackit.disposable.Disposables;
-import com.episode6.hackit.disposable.ForgetfulDisposableCollection;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -76,7 +76,7 @@ public class PausableManagersTest {
     inOrder.verify(mCheckedDisposablePausable).dispose();
     inOrder.verify(mDisposablePausable).dispose();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    assertThat(getInternalList(collection)).isEmpty();
+    assertThat(getInternalList(collection)).isNull();
   }
 
   @Test
@@ -132,15 +132,15 @@ public class PausableManagersTest {
     inOrder.verify(mCheckedDisposablePausable).dispose();
     inOrder.verify(mDisposablePausable).dispose();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    assertThat(getInternalList(root)).isEmpty();
-    assertThat(getInternalList(collection)).isEmpty();
+    assertThat(getInternalList(root)).isNull();
+    assertThat(getInternalList(collection)).isNull();
   }
 
   @SuppressWarnings("unchecked")
-  private static List<Object> getInternalList(Object collection)
+  private static List<Pausable> getInternalList(Object collection)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = ForgetfulDisposableCollection.class.getDeclaredField("mList");
+    Field field = AbstractDelegateDisposable.class.getDeclaredField("mDelegate");
     field.setAccessible(true);
-    return (List<Object>) field.get(collection);
+    return (List<Pausable>) field.get(collection);
   }
 }

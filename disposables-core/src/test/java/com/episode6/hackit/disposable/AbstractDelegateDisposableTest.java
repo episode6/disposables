@@ -14,9 +14,21 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 
 /**
- * Tests {@link ForgetfulDelegateDisposable}
+ * Tests {@link AbstractDelegateDisposable}
  */
-public class ForgetfulDelegateDisposableTest {
+public class AbstractDelegateDisposableTest {
+
+  private static class SimpleDelegateDisposable<V> extends AbstractDelegateDisposable<V> {
+
+    public SimpleDelegateDisposable(V delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void dispose() {
+      MaybeDisposables.dispose(markDisposed());
+    }
+  }
 
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
@@ -26,7 +38,7 @@ public class ForgetfulDelegateDisposableTest {
 
   @Test
   public void testDisposeRandomObject() throws NoSuchFieldException, IllegalAccessException {
-    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mRandomObject);
+    AbstractDelegateDisposable disposable = new SimpleDelegateDisposable<>(mRandomObject);
 
     disposable.dispose();
 
@@ -36,7 +48,7 @@ public class ForgetfulDelegateDisposableTest {
 
   @Test
   public void testDisposeDisposable() throws NoSuchFieldException, IllegalAccessException {
-    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mDisposable);
+    AbstractDelegateDisposable disposable = new SimpleDelegateDisposable<>(mDisposable);
 
     disposable.dispose();
 
@@ -47,7 +59,7 @@ public class ForgetfulDelegateDisposableTest {
 
   @Test
   public void testDisposeDisposableMulti() throws NoSuchFieldException, IllegalAccessException {
-    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mDisposable);
+    AbstractDelegateDisposable disposable = new SimpleDelegateDisposable<>(mDisposable);
 
     disposable.dispose();
     disposable.dispose();
@@ -61,7 +73,7 @@ public class ForgetfulDelegateDisposableTest {
 
   @Test
   public void testDisposeCheckedDisposable() throws NoSuchFieldException, IllegalAccessException {
-    ForgetfulDelegateDisposable disposable = new ForgetfulDelegateDisposable<>(mCheckedDisposable);
+    AbstractDelegateDisposable disposable = new SimpleDelegateDisposable<>(mCheckedDisposable);
 
     disposable.dispose();
 
@@ -71,10 +83,10 @@ public class ForgetfulDelegateDisposableTest {
   }
 
   // yes, this is testing implementation, but forgetting its reference is part
-  // of the ForgetfulDelegateDisposable's contract, so its worth testing
-  private void verifyDelegateIsNull(ForgetfulDelegateDisposable forgetfulDelegateDisposable)
+  // of the AbstractDelegateDisposable's contract, so its worth testing
+  private void verifyDelegateIsNull(AbstractDelegateDisposable forgetfulDelegateDisposable)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = ForgetfulDelegateDisposable.class.getDeclaredField("mDelegate");
+    Field field = AbstractDelegateDisposable.class.getDeclaredField("mDelegate");
     field.setAccessible(true);
     assertThat(field.get(forgetfulDelegateDisposable)).isNull();
   }

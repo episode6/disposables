@@ -13,11 +13,4 @@ public interface DisposableManager extends HasDisposables {
    * @param disposable The disposable to add.
    */
   void add(Disposable disposable);
-
-  /**
-   * Add a collection of disposables to this manager, instructing the manager to pass down its calls
-   * to {@link #dispose()} to all disposables in the provided collection.
-   * @param disposables a collection containing disposable to add.
-   */
-  void addAll(Collection<Disposable> disposables);
 }

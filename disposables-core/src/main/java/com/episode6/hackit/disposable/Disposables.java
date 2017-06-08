@@ -4,6 +4,8 @@ import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Utility class containing static methods to create Disposables.
@@ -72,7 +74,7 @@ public class Disposables {
     }
   }
 
-  private static class SingleUseRunnable extends ForgetfulDelegateCheckedDisposable<Runnable> implements DisposableRunnable {
+  private static class SingleUseRunnable extends AbstractDelegateDisposable<Runnable> implements DisposableRunnable {
 
     SingleUseRunnable(Runnable delegate) {
       super(delegate);
@@ -86,11 +88,46 @@ public class Disposables {
         MaybeDisposables.dispose(delegate);
       }
     }
-  }
 
-  private static class BasicDisposableManager extends ForgetfulDisposableCollection<Disposable> implements DisposableManager {
-    public BasicDisposableManager(@Nullable Collection<Disposable> prefill) {
-      super(false, prefill);
+    @Override
+    public void dispose() {
+      MaybeDisposables.dispose(markDisposed());
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return MaybeDisposables.isDisposed(getDelegateOrNull());
     }
   }
-}
+
+  private static class BasicDisposableManager extends AbstractDelegateDisposable<List<Disposable>> implements DisposableManager {
+
+    BasicDisposableManager(@Nullable Collection<Disposable> prefill) {
+      super(prefill == null ? new LinkedList<Disposable>() : new LinkedList<Disposable>(prefill));
+    }
+
+    @Override
+    public void add(Disposable disposable) {
+      synchronized (this) {
+        getDelegateOrThrow().add(disposable);
+      }
+    }
+
+    @Override
+    public boolean flushDisposed() {
+      if (isMarkedDisposed()) {
+        return true;
+      }
+
+      synchronized (this) {
+        MaybeDisposables.flushList(getDelegateOrNull());
+        return isMarkedDisposed();
+      }
+    }
+
+    @Override
+    public void dispose() {
+      MaybeDisposables.disposeList(markDisposed());
+    }
+  }
+ }
