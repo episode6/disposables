@@ -44,6 +44,8 @@ public class Disposables {
    * If the runnable is disposed before being executed, the delegate singleUseRunnable will not
    * execute at all.
    *
+   * If the provided runnable implements Disposable, its dispose/isDisposed methods will NOT be passed on.
+   *
    * @param runnable The {@link Runnable} to wrap as a disposable.
    * @return A new {@link DisposableRunnable}
    */
@@ -85,18 +87,17 @@ public class Disposables {
       final Runnable delegate = markDisposed();
       if (delegate != null) {
         delegate.run();
-        MaybeDisposables.dispose(delegate);
       }
     }
 
     @Override
     public void dispose() {
-      MaybeDisposables.dispose(markDisposed());
+      markDisposed();
     }
 
     @Override
     public boolean isDisposed() {
-      return MaybeDisposables.isDisposed(getDelegateOrNull());
+      return getDelegateOrNull() == null;
     }
   }
 

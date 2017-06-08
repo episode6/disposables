@@ -255,7 +255,7 @@ public class DisposablesTest {
     disposableRunnable.run();
     disposableRunnable.run();
 
-    verify(mRunnableWithDispose).dispose();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
 
@@ -269,7 +269,7 @@ public class DisposablesTest {
 
     InOrder inOrder = inOrder(mRunnableWithDispose);
     inOrder.verify(mRunnableWithDispose).run();
-    inOrder.verify(mRunnableWithDispose).dispose();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
 
@@ -279,7 +279,7 @@ public class DisposablesTest {
 
     disposableRunnable.isDisposed();
 
-    verify(mRunnableWithDispose).isDisposed();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
 }
