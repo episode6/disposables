@@ -4,7 +4,11 @@ import com.episode6.hackit.disposable.*;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Utility class containing static methods to create pausables
@@ -60,6 +64,13 @@ public class Pausables {
 
   public static <T> CheckedDisposablePausable weak(T instance, Pauser<T> pauser, @Nullable Disposer<T> disposer) {
     return new WeakDisposablePausable<>(instance, pauser, disposer);
+  }
+
+  public static PausableExecutor queuingExecutor(Executor executor) {
+    if (executor instanceof QueuingPausableExecutor) {
+      return (PausableExecutor) executor;
+    }
+    return new QueuingPausableExecutor(executor);
   }
 
   private static class WeakDisposablePausable<V> implements CheckedDisposablePausable {
@@ -191,6 +202,74 @@ public class Pausables {
       if (pausables != null) {
         pausables.clear();
         mDisposableManager = null;
+      }
+    }
+  }
+
+  private static class QueuingPausableExecutor implements PausableExecutor {
+
+    transient volatile boolean mPaused = false;
+    final Executor mDelegate;
+    final List<PausableRunnable> mRunnables = new LinkedList<>();
+
+    QueuingPausableExecutor(Executor delegate) {
+      mDelegate = delegate;
+    }
+
+    @Override
+    public void pause() {
+      synchronized (this) {
+        mPaused = true;
+      }
+    }
+
+    @Override
+    public void resume() {
+      List<PausableRunnable> runnables;
+      synchronized (this) {
+        mPaused = false;
+
+        if (mRunnables.isEmpty()) {
+          return;
+        }
+
+        runnables = new LinkedList<>(mRunnables);
+        mRunnables.clear();
+      }
+      for (PausableRunnable runnable : runnables) {
+        mDelegate.execute(runnable);
+      }
+    }
+
+    @Override
+    public void execute(Runnable command) {
+      PausableRunnable pausableRunnable = new PausableRunnable(command);
+      synchronized (this) {
+        if (mPaused) {
+          mRunnables.add(pausableRunnable);
+          return;
+        }
+      }
+      mDelegate.execute(pausableRunnable);
+    }
+
+    class PausableRunnable implements Runnable {
+
+      final Runnable mRunnable;
+
+      PausableRunnable(Runnable runnable) {
+        mRunnable = runnable;
+      }
+
+      @Override
+      public void run() {
+        synchronized (QueuingPausableExecutor.this) {
+          if (mPaused) {
+            mRunnables.add(PausableRunnable.this);
+          } else {
+            mRunnable.run();
+          }
+        }
       }
     }
   }

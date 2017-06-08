@@ -28,7 +28,7 @@ public class PausableExecutorTest {
 
   @Before
   public void setup() {
-    mPausableExecutor = PausableExecutor.wrap(mExecutor);
+    mPausableExecutor = Pausables.queuingExecutor(mExecutor);
     doAnswer(new Answer() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
