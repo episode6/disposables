@@ -40,7 +40,7 @@ public class DisposableFutures {
 
     List<Disposable> prefill = Arrays.asList(disposables);
     if (future instanceof DelegateDisposableFuture) {
-      ((DelegateDisposableFuture) future).addDisposables(prefill);
+      ((DelegateDisposableFuture<T>) future).addDisposables(prefill);
       return (DisposableFuture<T>) future;
     }
 
