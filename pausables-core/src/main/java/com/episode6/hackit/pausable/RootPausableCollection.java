@@ -22,7 +22,7 @@ public class RootPausableCollection extends ForgetfulPausableCollection<Pausable
 
   /**
    * Create a standalone {@link RootPausableCollection}. You will have manually call {@link #dispose()}
-   * and {@link #flushDisposed()} on this collection to manage its disposal state & memory (or explicitly
+   * and {@link #flushDisposed()} on this collection to manage its disposal state and memory (or explicitly
    * add it to another disposable collection).
    *
    * Using a standalone pausable collection can be problematic if also using a {@link RootDisposableCollection}
