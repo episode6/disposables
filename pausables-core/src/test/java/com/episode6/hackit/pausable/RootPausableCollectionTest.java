@@ -1,7 +1,8 @@
 package com.episode6.hackit.pausable;
 
+import com.episode6.hackit.disposable.DisposableManager;
+import com.episode6.hackit.disposable.Disposables;
 import com.episode6.hackit.disposable.ForgetfulDisposableCollection;
-import com.episode6.hackit.disposable.RootDisposableCollection;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -80,7 +81,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testConnectedPause() {
-    RootDisposableCollection root = RootDisposableCollection.create();
+    DisposableManager root = Disposables.newManager();
     RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
@@ -94,7 +95,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testConnectedResume() {
-    RootDisposableCollection root = RootDisposableCollection.create();
+    DisposableManager root = Disposables.newManager();
     RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
@@ -109,7 +110,7 @@ public class RootPausableCollectionTest {
   @Test
   public void testConnectedFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    RootDisposableCollection root = RootDisposableCollection.create();
+    DisposableManager root = Disposables.newManager();
     RootPausableCollection collection = RootPausableCollection.createConnected(root, mCheckedDisposablePausable);
 
     assertThat(root.flushDisposed()).isFalse();
@@ -122,7 +123,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testConnectedDispose() throws NoSuchFieldException, IllegalAccessException {
-    RootDisposableCollection root = RootDisposableCollection.create();
+    DisposableManager root = Disposables.newManager();
     RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     root.dispose();
@@ -136,7 +137,7 @@ public class RootPausableCollectionTest {
   }
 
   @SuppressWarnings("unchecked")
-  private static List<Object> getInternalList(ForgetfulDisposableCollection collection)
+  private static List<Object> getInternalList(Object collection)
       throws NoSuchFieldException, IllegalAccessException {
     Field field = ForgetfulDisposableCollection.class.getDeclaredField("mList");
     field.setAccessible(true);

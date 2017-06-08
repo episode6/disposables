@@ -1,11 +1,24 @@
 package com.episode6.hackit.disposable;
 
+import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Utility class containing static methods to create Disposables.
  */
 public class Disposables {
+
+  /**
+   * Create a new {@link DisposableManager} to manage disposables created by your component.
+   * @param prefillDisposables An disposables to prepopulate the disposable manager with
+   * @return the new {@link DisposableManager}
+   */
+  public static DisposableManager newManager(Disposable... prefillDisposables) {
+    return new BasicDisposableManager(prefillDisposables.length > 0 ? Arrays.asList(prefillDisposables) : null);
+  }
+
   /**
    * Create a {@link CheckedDisposable} that holds a {@link WeakReference} to the supplied instance
    * instead of a strong one. Calls to {@link CheckedDisposable#isDisposed()} will check to see if
@@ -72,6 +85,12 @@ public class Disposables {
         delegate.run();
         MaybeDisposables.dispose(delegate);
       }
+    }
+  }
+
+  private static class BasicDisposableManager extends ForgetfulDisposableCollection<Disposable> implements DisposableManager {
+    public BasicDisposableManager(@Nullable Collection<Disposable> prefill) {
+      super(false, prefill);
     }
   }
 }

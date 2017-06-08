@@ -16,7 +16,7 @@ dependencies {
 ### What / Why?
 Disposables is a concept I've found myself coming back to a couple of times now, so I figured I'd try to formalize it. The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects/services in one place. As well as help you avoid holding references to objects purely so they may be cleaned up at some point.
 
-At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `RootDisposableCollection`, and when it's time to tear town the app/component/lifecycle, simply call `collection.dispose()` to tear down everything in one method call.
+At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `DisposableManager`, and when it's time to tear town the app/component/lifecycle, simply call `manager.dispose()` to tear down everything in one method call.
 
 Lets take a look at this simple Android Activity and see how disposables can help. Here you can see our activity holds references to 3 different object. All of them are created/setup in onCreate() and any one of them will trigger a memory leak if we forget to tear them down in onDestroy().
 ```java
@@ -66,7 +66,7 @@ Now lets see what the same class looks like using Disposables to handle the tear
 // With Disposables (pseuso-code)
 public class MyActivity extends Activity {
 
-  private final RootDisposableCollection mDisposables = RootDisposableCollection.create();
+  private final DisposableManager mDisposables = Disposables.newManager();
 
   private SqlConnection mSqlConnection;
 
@@ -156,7 +156,7 @@ Then our activity looks more like this...
 ```
 
 ### Managing Memory
-So far we've only created disposables for objects that are expected to exist for the entire life of our app/component/lifecycle, but you may want to use disposables to clean up temporary objects too. For this we've got `CheckedDisposable`, an extension to the Disposable interface that adds the method `boolean isDisposed()`. This allows a RootDisposableCollection to occasionally flush references to CheckedDisposables if they are already disposed.
+So far we've only created disposables for objects that are expected to exist for the entire life of our app/component/lifecycle, but you may want to use disposables to clean up temporary objects too. For this we've got `CheckedDisposable`, an extension to the Disposable interface that adds the method `boolean isDisposed()`. This allows a DisposableManager to occasionally flush references to CheckedDisposables if they are already disposed.
 
 For an example of CheckedDisposable, consider an activity that shows a dialog when the user clicks a button. A dialog could be disposed by the user dismissing it, but if it's not and we leave it attached when the application exits, we've leaked memory. So lets create a CheckedDisposable for it.
 ```java
@@ -181,9 +181,9 @@ public void onButtonClick() {
   dialog.show();
 }
 ```
-With this code, we could wind up adding any number of CheckedDisposables to our disposable collection. But we'll be able to flush all the completed ones at any time by calling `mDisposables.flushDisposed()`. Note that when and how often to call `RootDisposableCollection.flushDisposed()` is up to you and is highly dependent on how you use disposables in your project.
+With this code, we could wind up adding any number of CheckedDisposables to our disposable manager. But we'll be able to flush all the completed ones at any time by calling `mDisposables.flushDisposed()`. Note that when and how often to call `DisposableManager.flushDisposed()` is up to you and is highly dependent on how you use disposables in your project.
 
-If you're an android developer you may have noticed a glaring problem with the dialog example above. In android a Dialog can actually be a fairly memory-heavy object since it contains it's own set of views. And even though our activity isn't holding an explicit reference to each dialog, the disposable collection will still hold those strong references until `flushDisposed()` is called. In this case it would be preferable to use a weak disposable created by `Disposables.weak(T instance, Disposer<T> disposer)`...
+If you're an android developer you may have noticed a glaring problem with the dialog example above. In android a Dialog can actually be a fairly memory-heavy object since it contains it's own set of views, etc. And even though our activity isn't holding an explicit reference to each dialog, the disposable manager will still hold those strong references until `flushDisposed()` is called. In this case it would be preferable to use a weak disposable created by `Disposables.weak(T instance, Disposer<T> disposer)` which would allow our dialog to "fall out" of memory once no other objects hold strong references to it...
 ```java
 static CheckedDisposable dialogDisposable(Dialog dialog) {
   // The returned disposable will hold a weak reference to dialog
@@ -203,11 +203,11 @@ static CheckedDisposable dialogDisposable(Dialog dialog) {
 }
 ```
 
-There is also a `HasDisposables` interface which also extends `Disposable` and adds the method `boolean flushDisposed()` (RootDisposableCollection implements HasDisposables). HasDisposables are treated just like CheckedDisposables (in a disposable collection) where if `flushDisposed()` returns true, the object is considered disposed and it's removed from the collection. The only real difference between `CheckedDisposable` and `HasDisposables` is the implied contract of what their respective methods do/don't do.
+There is also a `HasDisposables` interface which also extends `Disposable` and adds the method `boolean flushDisposed()` (DisposableManager implements HasDisposables). A DisposableManager will treat HasDisposables just like CheckedDisposables, where if `flushDisposed()` returns true, the object is considered disposed and it's removed from the collection. The only real difference between `CheckedDisposable` and `HasDisposables` is the implied contract of what their respective methods do/don't do.
 
 ### Disposable Futures
 The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It works by implementing `HasDisposables` and maintaining its own internal collection of disposables. Whenever a listener is added to it, the Runnable is wrapped in a DisposableRunnable and added to the internal collection before being added to the underlying future. This allows the DisposableFuture to effectively cancel all its callbacks upon disposal and release those references.
 
-It's important, when dealing with DisposableFutures, that you finish adding listeners/callbacks to them before adding them to a RootDisposableCollection. This is because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty.
+It's important, when dealing with DisposableFutures, that you finish adding listeners/callbacks to them before adding them to a DisposableManager. This is because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty.
 
 See the [DisposableFutures](disposable-futures/src/main/java/com/episode6/hackit/disposable/future/DisposableFutures.java) class for available utility methods for working with DisposableFutures.
