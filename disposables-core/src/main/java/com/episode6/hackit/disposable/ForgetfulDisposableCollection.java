@@ -41,7 +41,7 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
 
   /**
    * Add multiple objects to the collection.
-   * @param objs
+   * @param objs The collection containing objects to add
    */
   public void addAll(Collection<V> objs) {
     if (objs.isEmpty()) {
