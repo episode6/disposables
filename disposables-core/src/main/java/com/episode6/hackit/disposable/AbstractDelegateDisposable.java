@@ -3,28 +3,28 @@ package com.episode6.hackit.disposable;
 import javax.annotation.Nullable;
 
 /**
- * An implementation of {@link Disposable} that can be subclassed or used directly.
- * Takes a delegate object type V and stores a strong reference to it until this
- * object is disposed. Upon dispose, this object will release its strong reference
- * and if the delegate object itself implements {@link Disposable}, then dispose will
- * be called on the object.
+ * An abstract implementation of {@link Disposable}.
+ * Takes a delegate object type V and stores a strong reference to it until {@link #markDisposed()}
+ * is called. It's the subclasser's responsibility to implement {@link #dispose()} and call {@link #markDisposed()}
  */
-public class ForgetfulDelegateDisposable<V> implements Disposable {
+public abstract class AbstractDelegateDisposable<V> implements Disposable {
 
   private transient volatile boolean mIsDisposed;
   private @Nullable V mDelegate;
 
-  public ForgetfulDelegateDisposable(V delegate) {
+  public AbstractDelegateDisposable(V delegate) {
     mIsDisposed = false;
     mDelegate = delegate;
   }
 
   /**
-   * Dispose the delegate object
+   * For use by subclasses - provides an unsyncronized read of our volatile
+   * mIsDisposed boolean. Useful for fast returns at the top of methods when you
+   * want to no-op if disposed.
+   * @return true if mIsDisposed is true, false otherwise
    */
-  @Override
-  public void dispose() {
-    MaybeDisposables.dispose(markDisposed());
+  protected boolean isMarkedDisposed() {
+    return mIsDisposed;
   }
 
   /**
@@ -67,16 +67,9 @@ public class ForgetfulDelegateDisposable<V> implements Disposable {
    * and {@link #getDelegateOrNull()} will return null after this method has been
    * called once.
    *
-   * This method is package-protected as it should not be used in direct subclasses
-   * of {@link ForgetfulDelegateDisposable}. Only subclasses of {@link ForgetfulDelegateCheckedDisposable}
-   * should use this method.
-   *
-   * If calling this method from a subclass, its expected that you will pass the returned
-   * object to {@link MaybeDisposables#dispose(Object)} when you are finished with it.
-   *
    * @return The delegate or null if we've already been disposed.
    */
-   @Nullable V markDisposed() {
+   protected final @Nullable V markDisposed() {
     if (mIsDisposed) {
       return null;
     }
