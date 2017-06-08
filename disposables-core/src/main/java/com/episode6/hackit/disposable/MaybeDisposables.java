@@ -1,6 +1,9 @@
 package com.episode6.hackit.disposable;
 
 import javax.annotation.Nullable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Utility methods for dealing with objects that might be disposable.
@@ -27,6 +30,17 @@ public class MaybeDisposables {
     dispose(maybeDisposable);
   }
 
+  public static void disposeList(@Nullable List list) {
+    if (list == null || list.isEmpty()) {
+      return;
+    }
+
+    for (ListIterator iterator = list.listIterator(list.size()); iterator.hasPrevious();) {
+      dispose(iterator.previous());
+    }
+    list.clear();
+  }
+
   public static boolean isDisposed(@Nullable Object maybeDisposed) {
     return maybeDisposed == null ||
         (isCheckedDisposable(maybeDisposed) && ((CheckedDisposable) maybeDisposed).isDisposed());
@@ -47,6 +61,18 @@ public class MaybeDisposables {
   public static boolean isFlushable(@Nullable Object maybeFlushable) {
     return isDisposed(maybeFlushable) ||
         maybeFlushable instanceof HasDisposables && ((HasDisposables) maybeFlushable).flushDisposed();
+  }
+
+  public static void flushList(@Nullable List list) {
+    if (list == null || list.isEmpty()) {
+      return;
+    }
+
+    for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+      if (isFlushable(iterator.next())) {
+        iterator.remove();
+      }
+    }
   }
 
   private static boolean isCheckedDisposable(Object object) {

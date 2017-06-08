@@ -8,6 +8,10 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -25,6 +29,8 @@ public class MaybePausablesTest {
   @Mock Pausable mPausable;
   @Mock Pauser mPauser;
   @Mock TestObj mTestObj;
+  @Mock DisposablePausable mDisposablePausable;
+  @Mock CheckedDisposablePausable mCheckedDisposablePausable;
 
   @Test
   public void testNulls() {
@@ -83,5 +89,35 @@ public class MaybePausablesTest {
     inOrder.verify(mPauser).resumeInstance(mPausable);
     inOrder.verify(mPausable).resume();
     verifyNoMoreInteractions(mPauser, mPausable);
+  }
+
+  @Test
+  public void testPauseList() {
+    List<Object> list = asList(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+
+    MaybePausables.pauseList(list);
+
+    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+    inOrder.verify(mCheckedDisposablePausable).pause();
+    inOrder.verify(mDisposablePausable).pause();
+    inOrder.verify(mPausable).pause();
+    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+  }
+
+  @Test
+  public void testResumeList() {
+    List<Object> list = asList(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+
+    MaybePausables.resumeList(list);
+
+    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+    inOrder.verify(mPausable).resume();
+    inOrder.verify(mDisposablePausable).resume();
+    inOrder.verify(mCheckedDisposablePausable).resume();
+    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable, mTestObj);
+  }
+
+  static <T> List<T> asList(T... a) {
+    return new LinkedList<>(Arrays.asList(a));
   }
 }

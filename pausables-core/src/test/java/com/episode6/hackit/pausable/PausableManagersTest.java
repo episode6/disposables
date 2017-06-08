@@ -35,9 +35,9 @@ public class PausableManagersTest {
     collection.pause();
 
     InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    inOrder.verify(mPausable).pause();
-    inOrder.verify(mDisposablePausable).pause();
     inOrder.verify(mCheckedDisposablePausable).pause();
+    inOrder.verify(mDisposablePausable).pause();
+    inOrder.verify(mPausable).pause();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
   }
 
@@ -87,9 +87,9 @@ public class PausableManagersTest {
     collection.pause();
 
     InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    inOrder.verify(mPausable).pause();
-    inOrder.verify(mDisposablePausable).pause();
     inOrder.verify(mCheckedDisposablePausable).pause();
+    inOrder.verify(mDisposablePausable).pause();
+    inOrder.verify(mPausable).pause();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
   }
 

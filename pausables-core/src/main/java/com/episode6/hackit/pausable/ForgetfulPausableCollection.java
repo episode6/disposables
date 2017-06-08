@@ -4,8 +4,6 @@ import com.episode6.hackit.disposable.ForgetfulDisposableCollection;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  *
@@ -25,26 +23,14 @@ public class ForgetfulPausableCollection<V> extends ForgetfulDisposableCollectio
   @Override
   public void pause() {
     synchronized (this) {
-      List<V> list = getListOrThrow();
-      if (list.isEmpty()) {
-        return;
-      }
-      for (Iterator<V> iterator = list.iterator(); iterator.hasNext();) {
-        MaybePausables.pause(iterator.next());
-      }
+      MaybePausables.pauseList(getListOrThrow());
     }
   }
 
   @Override
   public void resume() {
     synchronized (this) {
-      List<V> list = getListOrThrow();
-      if (list.isEmpty()) {
-        return;
-      }
-      for (Iterator<V> iterator = list.iterator(); iterator.hasNext();) {
-        MaybePausables.resume(iterator.next());
-      }
+      MaybePausables.resumeList(getListOrThrow());
     }
   }
 }

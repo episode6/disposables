@@ -1,7 +1,9 @@
 package com.episode6.hackit.disposable;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * An implementation of a (potentially) disposable collection of objects. The type of V does not have to
@@ -41,7 +43,7 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
 
   /**
    * Add multiple objects to the collection.
-   * @param objs The collection containing objects to add
+   * @param objs The collection containing objec
    */
   public void addAll(Collection<V> objs) {
     if (objs.isEmpty()) {
@@ -70,11 +72,7 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
         return true;
       }
 
-      for (Iterator<V> iterator = mList.iterator(); iterator.hasNext();) {
-        if (MaybeDisposables.isFlushable(iterator.next())) {
-          iterator.remove();
-        }
-      }
+      MaybeDisposables.flushList(mList);
 
       if (mDisposeOnFlush && mList.isEmpty()) {
         dispose();
@@ -95,14 +93,8 @@ public class ForgetfulDisposableCollection<V> implements HasDisposables {
       }
       mIsDisposed = true;
     }
-    if (mList.isEmpty()) {
-      return;
-    }
 
-    for (ListIterator<V> iterator = mList.listIterator(mList.size()); iterator.hasPrevious();) {
-      MaybeDisposables.dispose(iterator.previous());
-    }
-    mList.clear();
+    MaybeDisposables.disposeList(mList);
   }
 
   protected List<V> getListOrThrow() {
