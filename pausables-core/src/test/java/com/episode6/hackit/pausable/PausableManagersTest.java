@@ -18,9 +18,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests {@link RootPausableCollection}
+ * Tests {@link PausableManager}s
  */
-public class RootPausableCollectionTest {
+public class PausableManagersTest {
 
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
@@ -30,7 +30,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testStandalonePause() {
-    RootPausableCollection collection = RootPausableCollection.create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
 
@@ -43,7 +43,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testStandaloneResume() {
-    RootPausableCollection collection = RootPausableCollection.create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
 
@@ -57,7 +57,7 @@ public class RootPausableCollectionTest {
   @Test
   public void testStandaloneFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    RootPausableCollection collection = RootPausableCollection.create(mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newStandaloneManager(mCheckedDisposablePausable);
 
     assertThat(collection.flushDisposed()).isFalse();
 
@@ -68,7 +68,7 @@ public class RootPausableCollectionTest {
 
   @Test
   public void testStandaloneDispose() throws NoSuchFieldException, IllegalAccessException {
-    RootPausableCollection collection = RootPausableCollection.create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.dispose();
 
@@ -82,7 +82,7 @@ public class RootPausableCollectionTest {
   @Test
   public void testConnectedPause() {
     DisposableManager root = Disposables.newManager();
-    RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
 
@@ -96,7 +96,7 @@ public class RootPausableCollectionTest {
   @Test
   public void testConnectedResume() {
     DisposableManager root = Disposables.newManager();
-    RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
 
@@ -111,7 +111,7 @@ public class RootPausableCollectionTest {
   public void testConnectedFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
     DisposableManager root = Disposables.newManager();
-    RootPausableCollection collection = RootPausableCollection.createConnected(root, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newConnectedManager(root, mCheckedDisposablePausable);
 
     assertThat(root.flushDisposed()).isFalse();
 
@@ -124,7 +124,7 @@ public class RootPausableCollectionTest {
   @Test
   public void testConnectedDispose() throws NoSuchFieldException, IllegalAccessException {
     DisposableManager root = Disposables.newManager();
-    RootPausableCollection collection = RootPausableCollection.createConnected(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     root.dispose();
 
