@@ -26,7 +26,6 @@ public class MaybePausables {
     if (pauser != null) {
       pauser.pauseInstance(object);
     }
-    pause(object);
   }
 
   public static void pauseList(@Nullable List list) {
@@ -55,7 +54,6 @@ public class MaybePausables {
     if (pauser != null) {
       pauser.resumeInstance(object);
     }
-    resume(object);
   }
 
   public static void resumeList(@Nullable List list) {

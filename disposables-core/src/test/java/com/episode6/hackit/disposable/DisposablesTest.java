@@ -72,7 +72,6 @@ public class DisposablesTest {
 
     verify(mWeakDisposable).get();
     verify(mockDisposer).disposeInstance(mMockDisposable);
-    verify(mMockDisposable).dispose();
     verify(mWeakDisposable).clear();
     verifyNoMoreInteractions(mMockDisposable, mockDisposer, mWeakDisposable);
   }
@@ -87,10 +86,9 @@ public class DisposablesTest {
     boolean isDisposed = wrapper.isDisposed();
 
     verify(mWeakCheckedDisposable).get();
-    verify(mMockCheckedDisposable).isDisposed();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
-    assertThat(isDisposed).isFalse();
+    assertThat(isDisposed).isTrue();
   }
 
   @Test
@@ -104,7 +102,6 @@ public class DisposablesTest {
     boolean isDisposed = wrapper.isDisposed();
 
     verify(mWeakCheckedDisposable).get();
-    verify(mMockCheckedDisposable).isDisposed();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
     assertThat(isDisposed).isTrue();
@@ -121,7 +118,6 @@ public class DisposablesTest {
     verify(mWeakCheckedDisposable).get();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verify(mockDisposer).disposeInstance(mMockCheckedDisposable);
-    verify(mMockCheckedDisposable).dispose();
     verify(mWeakCheckedDisposable).clear();
     verifyNoMoreInteractions(mockDisposer, mMockCheckedDisposable, mWeakCheckedDisposable);
   }

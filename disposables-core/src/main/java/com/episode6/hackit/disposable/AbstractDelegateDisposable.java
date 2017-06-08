@@ -67,9 +67,6 @@ public abstract class AbstractDelegateDisposable<V> implements Disposable {
    * and {@link #getDelegateOrNull()} will return null after this method has been
    * called once.
    *
-   * If calling this method from a subclass, its expected that you will pass the returned
-   * object to {@link MaybeDisposables#dispose(Object)} when you are finished with it.
-   *
    * @return The delegate or null if we've already been disposed.
    */
    protected final @Nullable V markDisposed() {

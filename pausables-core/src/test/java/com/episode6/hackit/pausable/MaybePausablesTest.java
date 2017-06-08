@@ -77,7 +77,6 @@ public class MaybePausablesTest {
 
     InOrder inOrder = Mockito.inOrder(mPauser, mPausable);
     inOrder.verify(mPauser).pauseInstance(mPausable);
-    inOrder.verify(mPausable).pause();
     verifyNoMoreInteractions(mPauser, mPausable);
   }
 
@@ -87,7 +86,6 @@ public class MaybePausablesTest {
 
     InOrder inOrder = Mockito.inOrder(mPauser, mPausable);
     inOrder.verify(mPauser).resumeInstance(mPausable);
-    inOrder.verify(mPausable).resume();
     verifyNoMoreInteractions(mPauser, mPausable);
   }
 

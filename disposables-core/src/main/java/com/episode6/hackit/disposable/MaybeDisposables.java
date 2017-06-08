@@ -27,7 +27,6 @@ public class MaybeDisposables {
     if (disposer != null) {
       disposer.disposeInstance(maybeDisposable);
     }
-    dispose(maybeDisposable);
   }
 
   public static void disposeList(@Nullable List list) {
@@ -51,11 +50,7 @@ public class MaybeDisposables {
       return true;
     }
 
-    if (disposer != null && disposer instanceof CheckedDisposer) {
-      return ((CheckedDisposer<T>)disposer).isInstanceDisposed(maybeDisposed) &&
-          (!isCheckedDisposable(maybeDisposed) || isDisposed(maybeDisposed));
-    }
-    return isDisposed(maybeDisposed);
+    return disposer != null && disposer instanceof CheckedDisposer && ((CheckedDisposer<T>) disposer).isInstanceDisposed(maybeDisposed);
   }
 
   public static boolean isFlushable(@Nullable Object maybeFlushable) {

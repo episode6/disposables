@@ -103,11 +103,8 @@ public class MaybeDisposablesTest {
 
     InOrder inOrder = Mockito.inOrder(mDisposable, mDisposer, mCheckedDisposable, mCheckedDisposer, mHasDisposables);
     inOrder.verify(mDisposer).disposeInstance(mDisposable);
-    inOrder.verify(mDisposable).dispose();
     inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposable);
     inOrder.verify(mCheckedDisposer).disposeInstance(mCheckedDisposable);
-    inOrder.verify(mCheckedDisposable).dispose();
-    inOrder.verify(mHasDisposables).dispose();
     verifyNoMoreInteractions(mDisposable, mDisposer, mCheckedDisposable, mCheckedDisposer, mHasDisposables);
   }
 
@@ -149,13 +146,10 @@ public class MaybeDisposablesTest {
 
   @Test
   public void testIsCheckedDisposedWithDisposer() {
-    when(mCheckedDisposer.isInstanceDisposed(mCheckedDisposable)).thenReturn(true);
-
     assertThat(MaybeDisposables.isDisposed(mCheckedDisposable, mCheckedDisposer)).isFalse();
 
     InOrder inOrder = Mockito.inOrder(mCheckedDisposer, mCheckedDisposable);
     inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposable);
-    inOrder.verify(mCheckedDisposable).isDisposed();
     verifyNoMoreInteractions(mCheckedDisposable, mDisposer, mCheckedDisposer);
   }
 
@@ -168,7 +162,6 @@ public class MaybeDisposablesTest {
 
     InOrder inOrder = Mockito.inOrder(mCheckedDisposer, mCheckedDisposable);
     inOrder.verify(mCheckedDisposer).isInstanceDisposed(mCheckedDisposable);
-    inOrder.verify(mCheckedDisposable).isDisposed();
     verifyNoMoreInteractions(mCheckedDisposable, mDisposer, mCheckedDisposer);
   }
 
