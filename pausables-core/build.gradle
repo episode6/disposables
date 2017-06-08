@@ -9,6 +9,8 @@ targetCompatibility = 1.7
 dependencies {
   compile project(':disposables-core')
   compile 'com.google.code.findbugs:jsr305'
+  testCompile project(':disposable-futures')
+  testCompile 'com.google.guava:guava'
   testCompile 'junit:junit'
   testCompile 'org.mockito:mockito-core'
   testCompile 'org.powermock:powermock-api-mockito2'
