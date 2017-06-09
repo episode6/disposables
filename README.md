@@ -158,7 +158,7 @@ Then our activity looks more like this...
 ```
 
 ### Managing Memory
-So far we've only created disposables for objects that are expected to exist for the entire life of our app/component/lifecycle, but you may want to use disposables to clean up temporary objects too. For this we've got `CheckedDisposable`, an extension to the Disposable interface that adds the method `boolean isDisposed()`. This allows a DisposableManager to occasionally flush references to CheckedDisposables if they are already disposed.
+So far we've only created disposables for objects that are expected to exist for the entire life of our component, but you may want to use disposables to clean up temporary objects too. For this we've got `CheckedDisposable`, an extension to the Disposable interface that adds the method `boolean isDisposed()`. This allows a DisposableManager to occasionally flush references to CheckedDisposables if they are already disposed.
 
 For an example of CheckedDisposable, consider an activity that shows a dialog when the user clicks a button. A dialog could be disposed by the user dismissing it, but if it's not and we leave it attached when the application exits, we've leaked memory. So lets create a CheckedDisposable for it.
 ```java
@@ -195,7 +195,7 @@ If you're an android developer you may have noticed a glaring problem with the d
 static CheckedDisposable dialogDisposable(Dialog dialog) {
   // The returned disposable will hold a weak reference to dialog
   // instead of a strong one. The provided disposer will only be
-  //called if the dialog is non-null.
+  // called if the dialog is non-null.
   return Disposables.weak(
       dialog,
       new CheckedDisposer<Dialog> {
@@ -222,7 +222,7 @@ public interface Pausable {
 ```
 Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that happen to implement `Disposable`.
 
-To create a PausableManager you have two options provided...
+To create a PausableManager there are two options provided...
 ```java
   final PausableManager mPausables = Pausables.newStandaloneManager();
 ```
