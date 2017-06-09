@@ -17,7 +17,7 @@ dependencies {
 ```
 
 ### What / Why?
-Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be applicable anywhere Java is.
+Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be applicable anywhere Java7 is.
 
 The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects in one place. As well as help you avoid holding references purely so they may be cleaned up at some point.
 
