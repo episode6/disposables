@@ -17,9 +17,9 @@ dependencies {
 ```
 
 ### What / Why?
-Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be application anywhere Java is.
+Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be applicable anywhere Java is.
 
-The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects/services in one place. As well as help you avoid holding references to objects purely so they may be cleaned up at some point.
+The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects in one place. As well as help you avoid holding references purely so they may be cleaned up at some point.
 
 At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `DisposableManager`, and when it's time to tear town the app/component/lifecycle, simply call `manager.dispose()` to tear down everything in one method call.
 
@@ -46,17 +46,14 @@ public class MyActivity extends Activity {
   protected void onDestroy() {
     if (myServiceListener != null) {
       myService.unregisterListener(myServiceListener);
-      myServiceListener = null;
     }
 
     if (myService != null) {
       myService.unbind();
-      myService = null;
     }
 
     if (mSqlConnection != null) {
       mSqlConnection.close();
-      mSqlConnection = null;
     }
   }
 }
@@ -185,6 +182,10 @@ public void onButtonClick() {
 
   dialog.show();
 }
+
+public void onTrimMemory() {
+  mDisposables.flushDisposed();
+}
 ```
 With this code, we could wind up adding any number of CheckedDisposables to our disposable manager. But we'll be able to flush all the completed ones at any time by calling `mDisposables.flushDisposed()`. Note that when and how often to call `DisposableManager.flushDisposed()` is up to you and is highly dependent on how you use disposables in your project.
 
@@ -192,10 +193,10 @@ If you're an android developer you may have noticed a glaring problem with the d
 ```java
 static CheckedDisposable dialogDisposable(Dialog dialog) {
   // The returned disposable will hold a weak reference to dialog
-  // instead of a strong one.
+  // instead of a strong one. The provided disposer will only be
+  //called if the dialog is non-null.
   return Disposables.weak(
       dialog,
-      // The disposer will only be used if the dialog is non-null
       new CheckedDisposer<Dialog> {
         public boolean isInstanceDisposed(Dialog instance) {
           return !instance.isShowing();
@@ -208,7 +209,7 @@ static CheckedDisposable dialogDisposable(Dialog dialog) {
 }
 ```
 
-There is also a `HasDisposables` interface which also extends `Disposable` and adds the method `boolean flushDisposed()` (DisposableManager implements HasDisposables). A DisposableManager will treat HasDisposables just like CheckedDisposables, where if `flushDisposed()` returns true, the object is considered disposed and it's removed from the collection. The only real difference between `CheckedDisposable` and `HasDisposables` is the implied contract of what their respective methods do/don't do.
+There is also a `HasDisposables` interface which also extends `Disposable` and adds the method `boolean flushDisposed()`. A DisposableManager will treat HasDisposables just like CheckedDisposables; if `flushDisposed()` returns true, the object is considered disposed and it's removed from the collection. The only real difference between `CheckedDisposable` and `HasDisposables` is the implied contract of what their respective methods do/don't do.
 
 ### Pausables
 The `pausables-core` module is intended for application components that can be paused (like android activities/fragments). It adds support for `Pausable`, another simple interface with two methods...
@@ -218,7 +219,7 @@ public interface Pausable {
   void resume();
 }
 ```
-Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that do implement `Disposable`.
+Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that happen to implement `Disposable`.
 
 ...
 
@@ -314,7 +315,9 @@ public class MyActivity extends Activity {
 ```
 Because we're now adding our callback to a DisposableFuture (and disposing it in onDestroy, by-way of the DisposableManager), we can be certain that our callback will not fire after our activity is destroyed, and that the reference to our callback will be released (ensuring the activity can be garbage collected).
 
-It's important to note that we added the DisposableFuture to DisposableManager last, after we'd already added our callback to it. This is vital because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty. Since the above example of wrapping a ListenableFuture, adding a callback, and registering the disposable can be very common, we provide the convenience method `DisposableFutures.addCallback(ListenableFuture, FutureCallback, Executor)` that returns a Disposable, so that all 3 tasks can be accomplished in one call.
+It's important to note that we added the DisposableFuture to DisposableManager **last**, after we'd already added our callback to it. This is vital because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty.
+
+Since the above example of wrapping a ListenableFuture, adding a callback, and registering the disposable can be very common, we provide the convenience method `DisposableFutures.addCallback(ListenableFuture, FutureCallback, Executor)` that returns a Disposable, so that all 3 tasks can be accomplished in one call.
 ```java
 mDisposables.add(
     DisposableFutures.addCallback(
