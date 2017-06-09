@@ -331,6 +331,9 @@ Since all our examples have involved an android activity, there is one more opti
 public class MyActivity extends Activity {
 
   private final DisposableManager mDisposables = Disposables.newManager();
+
+  // note: PausableManager is kind of pointless in this example since we only have
+  // a single Pausable to manage, but we leave it in as a usage example.
   private final PausableManager mPausables = Pausables.newConnectedManager(mDisposables);
 
   private PausableExecutor mUiExecutor;
@@ -377,5 +380,6 @@ public class MyActivity extends Activity {
   }
 }
 ```
+If the activity is paused before the api's future "returns" the callback will now be queued, and then executed when the activity resumes (or release if the activity is destroyed).
 
 See the [DisposableFutures](disposable-futures/src/main/java/com/episode6/hackit/disposable/future/DisposableFutures.java) class for more available utility methods for working with DisposableFutures.
