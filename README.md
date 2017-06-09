@@ -16,12 +16,12 @@ dependencies {
 }
 ```
 
-### What / Why?
 Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be applicable anywhere Java7 is.
 
+### What / Why?
 The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects in one place. As well as help you avoid holding references purely so they may be cleaned up at some point.
 
-At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `DisposableManager`, and when it's time to tear town the app/component/lifecycle, simply call `manager.dispose()` to tear down everything in one method call.
+At it's heart, a `Disposable` is a simple interface with a single method `void dispose()`. Over the lifetime of your app/component, you can continually add Disposables to a `DisposableManager`, and when it's time to tear-down the component, simply call `manager.dispose()` to tear-down everything in one method call.
 
 Lets take a look at this simple Android Activity and see how disposables can help. Here you can see our activity holds references to 3 different object. All of them are created/setup in onCreate() and any one of them will trigger a memory leak if we forget to tear them down in onDestroy().
 ```java
