@@ -386,3 +386,6 @@ public class MyActivity extends Activity {
 If the activity is paused before the api's future "returns" the callback will now be queued, and then executed when the activity resumes (or released if the activity is destroyed).
 
 See the [DisposableFutures](disposable-futures/src/main/java/com/episode6/hackit/disposable/future/DisposableFutures.java) class for more available utility methods for working with DisposableFutures.
+
+### License
+MIT: https://github.com/episode6/disposables/blob/master/LICENSE
