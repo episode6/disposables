@@ -231,9 +231,11 @@ public class MyActivity extends Activity {
 
   private final DisposableManager mDisposables = Disposables.newManager();
 
+  private Executor mUiExecutor;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    // showLoadingScreen();
+    mUiExecutor = AndroidExecutors.uiThreadExecutor();
 
     Service myService = bindService(MyService.class);
     mDisposables.add(MoreDisposables.forUnbindService(myService));
@@ -265,22 +267,22 @@ public class MyActivity extends Activity {
 }
 ```
 
-This basic use of a ListenableFuture might look fine at first, especially because it should actually work. The problem is, until the future "returns" it's actually holding a strong reference to your activity by way of the FutureCallback. So if your activity is destroyed before the future returns, not only do you leak memory (since the activity can't be garbage collected) but the callback will still fire sometime after the activity is destroyed.
+This basic use of a ListenableFuture might look fine at first, especially because it will actually work. The problem is, until the future "returns" it's actually holding a strong reference to your activity by way of the FutureCallback. So if your activity is destroyed before the future returns, not only do you leak memory (since the activity can't be garbage collected) but the callback will still fire sometime after the activity is destroyed.
 
-Let's correct this issue with a DisposableFuture...
+Let's correct these issues with a DisposableFuture...
 ```java
 public class MyActivity extends Activity {
 
   private final DisposableManager mDisposables = Disposables.newManager();
 
+  private Executor mUiExecutor;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    // showLoadingScreen();
+    mUiExecutor = AndroidExecutors.uiThreadExecutor();
 
     Service myService = bindService(MyService.class);
     mDisposables.add(MoreDisposables.forUnbindService(myService));
-
-    Executor uiExecutor = AndroidExecutors.uiThreadExecutor();
 
     // wrap with a DisposableFuture before adding callbacks to it.
     DisposableFuture<SomeApiData> disposableFuture =
@@ -298,7 +300,7 @@ public class MyActivity extends Activity {
               // showLoadingError(t);
             }
         },
-        uiExecutor);
+        mUiExecutor);
 
     // Lastly, add the DisposableFuture to your DisposableManager.
     // Only do this once you've finished adding callbacks.
@@ -311,17 +313,69 @@ public class MyActivity extends Activity {
   }
 }
 ```
-Here we've only added 2 lines of code, but because we're now adding callbacks to a DisposableFuture (and disposing it in onDestroy, by-way of the DisposableManager), we can be certain that our callback will not fire after our activity is destroyed, and that the reference to our callback will be released (ensuring the activity can be garbage collected).
+Because we're now adding our callback to a DisposableFuture (and disposing it in onDestroy, by-way of the DisposableManager), we can be certain that our callback will not fire after our activity is destroyed, and that the reference to our callback will be released (ensuring the activity can be garbage collected).
 
-It's important to note that we added the DisposableFuture to DisposableManager last, after we'd already added our callback to it. This is vital because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty.
-
-Since the above example of wrapping a ListenableFuture, adding a callback, and registering the disposable can be very common, we provide the convenience method `DisposableFutures.addCallback(ListenableFuture, FutureCallback, Executor)` that returns a Disposable, so that all 3 tasks can be accomplished in one call.
+It's important to note that we added the DisposableFuture to DisposableManager last, after we'd already added our callback to it. This is vital because a DisposableFuture will become disposed if `flushDisposed()` is called and the underlying collection of disposables is/becomes empty. Since the above example of wrapping a ListenableFuture, adding a callback, and registering the disposable can be very common, we provide the convenience method `DisposableFutures.addCallback(ListenableFuture, FutureCallback, Executor)` that returns a Disposable, so that all 3 tasks can be accomplished in one call.
 ```java
 mDisposables.add(
     DisposableFutures.addCallback(
         myService.getApiData(),
-        new FutureCallback<SomeApiData> { /* callback */ },
+        new FutureCallback<SomeApiData> {
+            /* callback */
+        },
         uiExecutor));
+```
+
+Since all our examples have involved an android activity, there is one more optimization we should make. Even though we've prevented the callback from firing after our activity has been destroyed, it can still fire while the activity is off the screen, after it's been paused. To handle that we can simply wrap our uiExecutor with a `PausableExecutor` provided by the `pausables-core` module. The whole thing could look something like this...
+```java
+public class MyActivity extends Activity {
+
+  private final DisposableManager mDisposables = Disposables.newManager();
+  private final PausableManager mPausables = Pausables.newConnectedManager(mDisposables);
+
+  private PausableExecutor mUiExecutor;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+
+    // A queuing pausable executor will collect a list of runnables while paused
+    // and fire them upon resume
+    mUiExecutor = Pausables.queuingExecutor(AndroidExecutors.uiThreadExecutor());
+    mPausables.add(mUiExecutor);
+
+    Service myService = bindService(MyService.class);
+    mDisposables.add(MoreDisposables.forUnbindService(myService));
+
+    mDisposables.add(
+        DisposableFutures.addCallback(
+            myService.getApiData(),
+            new FutureCallback<SomeApiData> {
+                public void onSuccess(SomeApiData result) {
+                  // showApiData(result);
+                }
+
+                public void onFailure(Throwable t) {
+                  // showLoadingError(t);
+                }
+            },
+            mUiExecutor));
+  }
+
+  @Override
+  protected void onPause() {
+    mPausables.pause();
+  }
+
+  @Override
+  protected void onResume() {
+    mPausables.resume();
+  }
+
+  @Override
+  protected void onDestroy() {
+    mDisposables.dispose();
+  }
+}
 ```
 
 See the [DisposableFutures](disposable-futures/src/main/java/com/episode6/hackit/disposable/future/DisposableFutures.java) class for more available utility methods for working with DisposableFutures.
