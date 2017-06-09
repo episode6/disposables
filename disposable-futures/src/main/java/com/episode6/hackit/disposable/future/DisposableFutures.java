@@ -8,10 +8,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +46,7 @@ public class DisposableFutures {
    * @param <T> The type of future being wrapped
    * @return a {@link DisposableFuture} with the included disposables attached
    */
-  public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Collection<Disposable> disposables) {
+  public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Collection<? extends Disposable> disposables) {
     if (future instanceof DelegateDisposableFuture) {
       ((DelegateDisposableFuture<T>) future).addDisposables(disposables);
       return (DisposableFuture<T>) future;
@@ -141,12 +138,12 @@ public class DisposableFutures {
 
     private final ListenableFuture<V> mDelegate;
 
-    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<Disposable> prefill) {
+    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<? extends Disposable> prefill) {
       super(prefill == null ? new LinkedList<Disposable>() : new LinkedList<Disposable>(prefill));
       mDelegate = delegate;
     }
 
-    void addDisposables(Collection<Disposable> disposables) {
+    void addDisposables(Collection<? extends Disposable> disposables) {
       synchronized (this) {
         getDelegateOrThrow().addAll(disposables);
       }
