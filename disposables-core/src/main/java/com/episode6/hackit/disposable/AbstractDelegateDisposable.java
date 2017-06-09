@@ -23,7 +23,7 @@ public abstract class AbstractDelegateDisposable<V> implements Disposable {
    * want to no-op if disposed.
    * @return true if mIsDisposed is true, false otherwise
    */
-  protected boolean isMarkedDisposed() {
+  protected final boolean isMarkedDisposed() {
     return mIsDisposed;
   }
 
