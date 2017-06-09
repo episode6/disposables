@@ -222,8 +222,16 @@ public interface Pausable {
 ```
 Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that happen to implement `Disposable`.
 
-...
-
+To create a PausableManager you have to options provided...
+```java
+  final PausableManager mPausables = Pausables.newStandaloneManager();
+```
+Or if you're pairing Pausables with Disposables
+```java
+  final DisposableManager mDisposables = Disposables.newManager();
+  final PausableManager mPausables = Pausables.newConnectedManager(mDisposables);
+```
+The reason we use a connected PausableManager is to ensure all our Pausables and Disposables are disposed of in the correct order regardless of which collection they belong to. When using a connected PausableManager, you **do not** need to call dispose() or flushDisposed() directly on it. Calls to the DisposableManager will be properly propogated.
 
 ### Disposable Futures
 The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It works by implementing `HasDisposables` and maintaining its own internal collection of disposables. Whenever a listener is added to it, the Runnable is wrapped in a single-use DisposableRunnable and added to the internal collection before being added to the underlying future. This allows the DisposableFuture to effectively cancel all its callbacks upon disposal and release those references to avoid leaking them.
