@@ -222,7 +222,7 @@ public interface Pausable {
 ```
 Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that happen to implement `Disposable`.
 
-To create a PausableManager you have to options provided...
+To create a PausableManager you have two options provided...
 ```java
   final PausableManager mPausables = Pausables.newStandaloneManager();
 ```
