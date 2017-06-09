@@ -184,6 +184,7 @@ public void onButtonClick() {
 }
 
 public void onTrimMemory() {
+  // when and how often to call this method is up to you.
   mDisposables.flushDisposed();
 }
 ```
