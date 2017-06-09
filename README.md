@@ -17,7 +17,9 @@ dependencies {
 ```
 
 ### What / Why?
-Disposables is a concept I've found myself coming back to a couple of times now, so I figured I'd try to formalize it. The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects/services in one place. As well as help you avoid holding references to objects purely so they may be cleaned up at some point.
+Note: While the examples below are all shown in Android, disposables is a pure Java library, and should be application anywhere Java is.
+
+The goal of this project is to allow you (the developer) to couple your setup and tear-down logic for heavy-weight objects/services in one place. As well as help you avoid holding references to objects purely so they may be cleaned up at some point.
 
 At it's heart, a `Disposable` is a simple interface with a single method `void dispose();`. Over the lifetime of your app/component/lifecycle, you can continually add Disposables to a `DisposableManager`, and when it's time to tear town the app/component/lifecycle, simply call `manager.dispose()` to tear down everything in one method call.
 
@@ -235,14 +237,12 @@ public class MyActivity extends Activity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    // AndroidExecutors is a made up class, you should provide
+    // your own executor
     mUiExecutor = AndroidExecutors.uiThreadExecutor();
 
     Service myService = bindService(MyService.class);
     mDisposables.add(MoreDisposables.forUnbindService(myService));
-
-    // AndroidExecutors is a made up class, you should provide
-    // your own executor
-    Executor uiExecutor = AndroidExecutors.uiThreadExecutor();
 
     // Fetch api data from myService and add a callback for it.
     ListenableFuture<SomeApiData> apiDataFuture = myService.getApiData();
@@ -257,7 +257,7 @@ public class MyActivity extends Activity {
               // showLoadingError(t);
             }
         },
-        uiExecutor);
+        mUiExecutor);
   }
 
   @Override
@@ -285,8 +285,7 @@ public class MyActivity extends Activity {
     mDisposables.add(MoreDisposables.forUnbindService(myService));
 
     // wrap with a DisposableFuture before adding callbacks to it.
-    DisposableFuture<SomeApiData> disposableFuture =
-        DisposableFutures.wrap(myService.getApiData());
+    DisposableFuture<SomeApiData> disposableFuture = DisposableFutures.wrap(myService.getApiData());
 
     // add callbacks to the DisposableFuture
     Futures.addCallback(
@@ -323,7 +322,7 @@ mDisposables.add(
         new FutureCallback<SomeApiData> {
             /* callback */
         },
-        uiExecutor));
+        mUiExecutor));
 ```
 
 Since all our examples have involved an android activity, there is one more optimization we should make. Even though we've prevented the callback from firing after our activity has been destroyed, it can still fire while the activity is off the screen, after it's been paused. To handle that we can simply wrap our uiExecutor with a `PausableExecutor` provided by the `pausables-core` module. The whole thing could look something like this...
