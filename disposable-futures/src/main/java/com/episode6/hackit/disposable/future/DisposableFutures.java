@@ -31,24 +31,36 @@ public class DisposableFutures {
    * @return a {@link DisposableFuture} with the included disposables attached
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
-    if (disposables.length == 0) {
-      if (future instanceof DisposableFuture) {
-        return (DisposableFuture<T>) future;
-      }
-      return new DelegateDisposableFuture<>(future,null);
+    if (disposables.length > 0) {
+      return wrap(future, Arrays.asList(disposables));
     }
 
-    List<Disposable> prefill = Arrays.asList(disposables);
+    if (future instanceof DisposableFuture) {
+      return (DisposableFuture<T>) future;
+    }
+    return new DelegateDisposableFuture<>(future,null);
+  }
+
+  /**
+   * Wrap the supplied future in a {@link DisposableFuture}. Any included disposables are
+   * added to the DisposableFuture's internal collection of disposables.
+   * @param future The future to wrap
+   * @param disposables {@link Disposable}s to be included in the DisposableFuture
+   * @param <T> The type of future being wrapped
+   * @return a {@link DisposableFuture} with the included disposables attached
+   */
+  public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Collection<Disposable> disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      ((DelegateDisposableFuture<T>) future).addDisposables(prefill);
+      ((DelegateDisposableFuture<T>) future).addDisposables(disposables);
       return (DisposableFuture<T>) future;
     }
 
     if (future instanceof Disposable) {
-      prefill = new LinkedList<>(prefill);
+      List<Disposable> prefill = new LinkedList<>(disposables);
       prefill.add(0, (Disposable) future);
+      return new DelegateDisposableFuture<>(future, prefill);
     }
-    return new DelegateDisposableFuture<>(future, prefill);
+    return new DelegateDisposableFuture<>(future, disposables);
   }
 
   /**
