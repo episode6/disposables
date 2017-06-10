@@ -8,8 +8,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -29,16 +28,36 @@ public class DisposableFutures {
    * @return a {@link DisposableFuture} with the included disposables attached
    */
   public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Disposable... disposables) {
+    if (disposables.length > 0) {
+      return wrap(future, Arrays.asList(disposables));
+    }
+
+    if (future instanceof DisposableFuture) {
+      return (DisposableFuture<T>) future;
+    }
+    return new DelegateDisposableFuture<>(future,null);
+  }
+
+  /**
+   * Wrap the supplied future in a {@link DisposableFuture}. Any included disposables are
+   * added to the DisposableFuture's internal collection of disposables.
+   * @param future The future to wrap
+   * @param disposables {@link Disposable}s to be included in the DisposableFuture
+   * @param <T> The type of future being wrapped
+   * @return a {@link DisposableFuture} with the included disposables attached
+   */
+  public static <T> DisposableFuture<T> wrap(ListenableFuture<T> future, Collection<? extends Disposable> disposables) {
     if (future instanceof DelegateDisposableFuture) {
-      ((DelegateDisposableFuture<T>) future).addAll(disposables);
+      ((DelegateDisposableFuture<T>) future).addDisposables(disposables);
       return (DisposableFuture<T>) future;
     }
-    if (future instanceof DisposableFuture && disposables.length == 0) {
-      return (DisposableFuture<T>) future;
+
+    if (future instanceof Disposable) {
+      List<Disposable> prefill = new LinkedList<>(disposables);
+      prefill.add(0, (Disposable) future);
+      return new DelegateDisposableFuture<>(future, prefill);
     }
-    return new DelegateDisposableFuture<T>(
-        future,
-        disposables.length == 0 ? null : Arrays.asList(disposables));
+    return new DelegateDisposableFuture<>(future, disposables);
   }
 
   /**
@@ -115,25 +134,52 @@ public class DisposableFutures {
     return transformAsyncAndWrap(wrap(input), transform, executor);
   }
 
-  private static class DelegateDisposableFuture<V> extends ForgetfulDisposableCollection<Disposable> implements DisposableFuture<V> {
+  private static class DelegateDisposableFuture<V> extends AbstractDelegateDisposable<List<Disposable>> implements DisposableFuture<V> {
 
     private final ListenableFuture<V> mDelegate;
 
-    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<Disposable> disposables) {
-      super(true, disposables);
+    DelegateDisposableFuture(ListenableFuture<V> delegate, @Nullable Collection<? extends Disposable> prefill) {
+      super(prefill == null ? new LinkedList<Disposable>() : new LinkedList<Disposable>(prefill));
       mDelegate = delegate;
-      if (delegate instanceof Disposable) {
-        getListOrThrow().add(0, (Disposable) delegate);
+    }
+
+    void addDisposables(Collection<? extends Disposable> disposables) {
+      synchronized (this) {
+        getDelegateOrThrow().addAll(disposables);
       }
     }
 
     @Override
     public void addListener(Runnable listener, Executor executor) {
+      DisposableRunnable runnable = Disposables.singleUseRunnable(listener);
       synchronized (this) {
-        DisposableRunnable runnable = Disposables.runnable(listener);
-        getListOrThrow().add(runnable);
+        getDelegateOrThrow().add(runnable);
         mDelegate.addListener(runnable, executor);
       }
+    }
+
+    @Override
+    public boolean flushDisposed() {
+      if (isMarkedDisposed()) {
+        return true;
+      }
+      synchronized (this) {
+        List<Disposable> disposables = getDelegateOrNull();
+        if (disposables == null) {
+          return true;
+        }
+        MaybeDisposables.flushList(disposables);
+        if (disposables.isEmpty()) {
+          markDisposed();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public void dispose() {
+      MaybeDisposables.disposeList(markDisposed());
     }
 
     @Override

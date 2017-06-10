@@ -26,6 +26,8 @@ public class DisposableFuturesTest {
   @Mock Disposable mDisposable;
   @Mock CheckedDisposable mCheckedDisposable;
   @Mock DisposableFuture<Boolean> mMockDisposableFuture;
+  @Mock Function mFunction;
+  @Mock AsyncFunction mAsyncFunction;
 
   SettableFuture<Boolean> mSettableFuture = SettableFuture.create();
 
@@ -265,6 +267,33 @@ public class DisposableFuturesTest {
         Futures.addCallback(intFuture, DisposableFuturesTest.<Integer>failingCallback(), MoreExecutors.directExecutor());
       }
     });
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testFutureTransformNotCalledIfDisposed() {
+    DisposableFuture<Integer> intFuture = DisposableFutures.transformAndWrap(
+        mSettableFuture,
+        mFunction,
+        MoreExecutors.directExecutor());
+
+    intFuture.dispose();
+    mSettableFuture.set(true);
+    verifyNoMoreInteractions(mFunction);
+  }
+
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testFutureAsyncTransformNotCalledIfDisposed() {
+    DisposableFuture<Integer> intFuture = DisposableFutures.transformAsyncAndWrap(
+        mSettableFuture,
+        mAsyncFunction,
+        MoreExecutors.directExecutor());
+
+    intFuture.dispose();
+    mSettableFuture.set(true);
+    verifyNoMoreInteractions(mFunction);
   }
 
   interface ThrowRunnable {

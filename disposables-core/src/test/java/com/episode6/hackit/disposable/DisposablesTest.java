@@ -1,13 +1,10 @@
 package com.episode6.hackit.disposable;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -24,8 +21,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({Disposables.class}) // creates weak refs
 @RunWith(PowerMockRunner.class)
 public class DisposablesTest {
-
-  @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
   interface ObjWithCleanup {
     boolean isCleanedUp();
@@ -77,7 +72,6 @@ public class DisposablesTest {
 
     verify(mWeakDisposable).get();
     verify(mockDisposer).disposeInstance(mMockDisposable);
-    verify(mMockDisposable).dispose();
     verify(mWeakDisposable).clear();
     verifyNoMoreInteractions(mMockDisposable, mockDisposer, mWeakDisposable);
   }
@@ -92,10 +86,9 @@ public class DisposablesTest {
     boolean isDisposed = wrapper.isDisposed();
 
     verify(mWeakCheckedDisposable).get();
-    verify(mMockCheckedDisposable).isDisposed();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
-    assertThat(isDisposed).isFalse();
+    assertThat(isDisposed).isTrue();
   }
 
   @Test
@@ -109,7 +102,6 @@ public class DisposablesTest {
     boolean isDisposed = wrapper.isDisposed();
 
     verify(mWeakCheckedDisposable).get();
-    verify(mMockCheckedDisposable).isDisposed();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verifyNoMoreInteractions(mMockCheckedDisposable, mockDisposer, mWeakCheckedDisposable);
     assertThat(isDisposed).isTrue();
@@ -126,7 +118,6 @@ public class DisposablesTest {
     verify(mWeakCheckedDisposable).get();
     verify(mockDisposer).isInstanceDisposed(mMockCheckedDisposable);
     verify(mockDisposer).disposeInstance(mMockCheckedDisposable);
-    verify(mMockCheckedDisposable).dispose();
     verify(mWeakCheckedDisposable).clear();
     verifyNoMoreInteractions(mockDisposer, mMockCheckedDisposable, mWeakCheckedDisposable);
   }
@@ -229,7 +220,7 @@ public class DisposablesTest {
 
   @Test
   public void testRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnable);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
@@ -241,7 +232,7 @@ public class DisposablesTest {
 
   @Test
   public void testRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnable);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnable);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -253,20 +244,20 @@ public class DisposablesTest {
 
   @Test
   public void testDisposableRunnableDispose() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.dispose();
     disposableRunnable.run();
     disposableRunnable.run();
     disposableRunnable.run();
 
-    verify(mRunnableWithDispose).dispose();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
 
   @Test
   public void testDisposableRunnableRun() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.run();
     disposableRunnable.run();
@@ -274,43 +265,17 @@ public class DisposablesTest {
 
     InOrder inOrder = inOrder(mRunnableWithDispose);
     inOrder.verify(mRunnableWithDispose).run();
-    inOrder.verify(mRunnableWithDispose).dispose();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
 
   @Test
   public void testDisposableRunnableCheck() {
-    DisposableRunnable disposableRunnable = Disposables.runnable(mRunnableWithDispose);
+    DisposableRunnable disposableRunnable = Disposables.singleUseRunnable(mRunnableWithDispose);
 
     disposableRunnable.isDisposed();
 
-    verify(mRunnableWithDispose).isDisposed();
+    // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
-  }
-
-  @Test
-  public void testForgetfulWrapIgnored() {
-    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<>(mObjWithCleanup);
-
-    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
-
-    assertThat(wrapper).isEqualTo(originalDisposable);
-  }
-
-  @Test
-  public void testForgetfulWrapNotIgnored() {
-    CheckedDisposable originalDisposable = new ForgetfulDelegateCheckedDisposable<Object>(mMockCheckedDisposable) {};
-
-    CheckedDisposable wrapper = Disposables.forgetful(originalDisposable);
-
-    assertThat(wrapper).isNotEqualTo(originalDisposable);
-
-    boolean isDisposed = wrapper.isDisposed();
-
-    verify(mMockCheckedDisposable).isDisposed();
-
-    wrapper.dispose();
-
-    verify(mMockCheckedDisposable).isDisposed();
   }
 }

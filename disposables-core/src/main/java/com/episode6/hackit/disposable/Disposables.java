@@ -1,19 +1,24 @@
 package com.episode6.hackit.disposable;
 
+import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * Utility class containing static methods to create Disposables from non-disposables
+ * Utility class containing static methods to create Disposables.
  */
 public class Disposables {
 
-  public static <T> CheckedDisposable forgetful(T obj) {
-    // subclasses of ForgetfulDelegateCheckedDisposable might be adding variables
-    // that explicitly need to be forgotten, so check obj.getClass() instead of using
-    // obj instanceof.
-    return obj.getClass() == ForgetfulDelegateCheckedDisposable.class ?
-        (CheckedDisposable) obj :
-        new ForgetfulDelegateCheckedDisposable<T>(obj);
+  /**
+   * Create a new {@link DisposableManager} to manage disposables created by your component.
+   * @param prefillDisposables An disposables to prepopulate the disposable manager with
+   * @return the new {@link DisposableManager}
+   */
+  public static DisposableManager newManager(Disposable... prefillDisposables) {
+    return new BasicDisposableManager(prefillDisposables.length > 0 ? Arrays.asList(prefillDisposables) : null);
   }
 
   /**
@@ -36,17 +41,16 @@ public class Disposables {
   /**
    * Creates a {@link DisposableRunnable} out of the provided {@link Runnable}. The resulting
    * DisposableRunnable will only allow its delegate to execute once before marking itself disposed.
-   * If the DisposableRunnable is disposed before being executed, the delegate runnable will not
+   * If the runnable is disposed before being executed, the delegate singleUseRunnable will not
    * execute at all.
+   *
+   * If the provided runnable implements Disposable, its dispose/isDisposed methods will NOT be passed on.
    *
    * @param runnable The {@link Runnable} to wrap as a disposable.
    * @return A new {@link DisposableRunnable}
    */
-  public static DisposableRunnable runnable(Runnable runnable) {
-    if (runnable instanceof DisposableRunnable) {
-      return (DisposableRunnable) runnable;
-    }
-    return new DelegateDisposableRunnable(runnable);
+  public static DisposableRunnable singleUseRunnable(Runnable runnable) {
+    return new SingleUseRunnable(runnable);
   }
 
   private static class WeakDisposableComponents<V> implements CheckedDisposable {
@@ -67,18 +71,14 @@ public class Disposables {
 
     @Override
     public void dispose() {
-      final V instance = instanceRef.get();
+      MaybeDisposables.dispose(instanceRef.get(), disposer);
       instanceRef.clear();
-      if (MaybeDisposables.isDisposed(instance, disposer)) {
-        return;
-      }
-      MaybeDisposables.dispose(instance, disposer);
     }
   }
 
-  private static class DelegateDisposableRunnable extends ForgetfulDelegateCheckedDisposable<Runnable> implements DisposableRunnable {
+  private static class SingleUseRunnable extends AbstractDelegateDisposable<Runnable> implements DisposableRunnable {
 
-    DelegateDisposableRunnable(Runnable delegate) {
+    SingleUseRunnable(Runnable delegate) {
       super(delegate);
     }
 
@@ -87,8 +87,48 @@ public class Disposables {
       final Runnable delegate = markDisposed();
       if (delegate != null) {
         delegate.run();
-        MaybeDisposables.dispose(delegate);
       }
     }
+
+    @Override
+    public void dispose() {
+      markDisposed();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return getDelegateOrNull() == null;
+    }
   }
-}
+
+  private static class BasicDisposableManager extends AbstractDelegateDisposable<List<Disposable>> implements DisposableManager {
+
+    BasicDisposableManager(@Nullable Collection<Disposable> prefill) {
+      super(prefill == null ? new LinkedList<Disposable>() : new LinkedList<Disposable>(prefill));
+    }
+
+    @Override
+    public void add(Disposable disposable) {
+      synchronized (this) {
+        getDelegateOrThrow().add(disposable);
+      }
+    }
+
+    @Override
+    public boolean flushDisposed() {
+      if (isMarkedDisposed()) {
+        return true;
+      }
+
+      synchronized (this) {
+        MaybeDisposables.flushList(getDelegateOrNull());
+        return isMarkedDisposed();
+      }
+    }
+
+    @Override
+    public void dispose() {
+      MaybeDisposables.disposeList(markDisposed());
+    }
+  }
+ }
