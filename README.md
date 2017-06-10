@@ -234,7 +234,9 @@ Or if you're pairing Pausables with Disposables
 The reason we use a connected PausableManager is to ensure all our Pausables and Disposables are disposed of in the correct order regardless of which collection they belong to. When using a connected PausableManager, you **do not** need to call dispose() or flushDisposed() directly on it. Calls to the DisposableManager will be properly propogated.
 
 ### Disposable Futures
-The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It works by implementing `HasDisposables` and maintaining its own internal collection of disposables. Whenever a listener is added to it, the Runnable is wrapped in a single-use DisposableRunnable and added to the internal collection before being added to the underlying future. This allows the DisposableFuture to effectively cancel all its callbacks upon disposal and release those references to avoid leaking them.
+The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It is designed to prevent unwanted callbacks and memory leaks from occurring after the end of your component's lifecycle.
+
+A DisposableFuture does this is by wrapping every listener added to it with a single-use DisposableRunnable. If dispose() is called before any of the listeners execute, their references are purged. This ensures the object that created the callbacks doesn't leak, and can be garbage-collected.
 
 Let's take a look at an android activity using ListenableFutures and see how DisposableFutures can help. In this case we're assuming our Service provides a ListenableFuture for some api data that we want to display.
 
