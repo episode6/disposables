@@ -11,6 +11,7 @@ dependencies {
 
     // add-ons
     compile 'com.episode6.hackit.disposable:disposable-futures:0.0.6-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposable-android:0.0.6-SNAPSHOT'
     compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.6-SNAPSHOT'
 }
 ```
