@@ -10,6 +10,10 @@ android {
   compileSdkVersion gdmcVersion('android.compilesdk') as Integer
   buildToolsVersion gdmcVersion('android.buildtools')
 
+  defaultConfig {
+    minSdkVersion 9
+  }
+
   buildTypes {
     release {
       minifyEnabled false
