@@ -5,14 +5,13 @@ An experimental java library for dealing with objects that need to be disposed.
 ```groovy
 repositories { jcenter() }
 dependencies {
-    // core module
-    compile 'com.episode6.hackit.disposable:disposables-core:0.0.3'
+    // core modules
+    compile 'com.episode6.hackit.disposable:disposables-core:0.0.4'
+    compile 'com.episode6.hackit.disposable:pausables-core:0.0.4'
 
-    // pausables core module
-    compile 'com.episode6.hackit.disposable:pausables-core:0.0.3'
-
-    // disposable support for listenable futures
-    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.3'
+    // add-ons
+    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.4'
+    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.4'
 }
 ```
 
