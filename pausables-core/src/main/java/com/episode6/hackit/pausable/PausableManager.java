@@ -6,7 +6,7 @@ package com.episode6.hackit.pausable;
 public interface PausableManager extends Pausable {
 
   /**
-   * Add a pausable to this manager so that calls to pause & resume
+   * Add a pausable to this manager so that calls to pause and resume
    * may be propogated to it.
    * @param pausable The pausable to add.
    */
