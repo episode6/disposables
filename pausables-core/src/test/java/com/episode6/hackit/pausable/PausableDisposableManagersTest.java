@@ -16,9 +16,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests {@link PausableManager}s
+ * Tests {@link PausableDisposableManager}s
  */
-public class PausableManagersTest {
+public class PausableDisposableManagersTest {
 
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
@@ -26,8 +26,8 @@ public class PausableManagersTest {
   @Mock DisposablePausable mDisposablePausable;
   @Mock CheckedDisposablePausable mCheckedDisposablePausable;
 
-  static PausableManager create(Pausable... pausables) {
-    PausableManager manager = Pausables.newDisposableManager();
+  static PausableDisposableManager create(Pausable... pausables) {
+    PausableDisposableManager manager = Pausables.newDisposableManager();
     for (Pausable p : pausables) {
       manager.addPausable(p);
     }
@@ -36,7 +36,7 @@ public class PausableManagersTest {
 
   @Test
   public void testStandalonePause() {
-    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
 
@@ -49,7 +49,7 @@ public class PausableManagersTest {
 
   @Test
   public void testStandaloneResume() {
-    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
 
@@ -63,7 +63,7 @@ public class PausableManagersTest {
   @Test
   public void testStandaloneFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    PausableManager collection = create(mCheckedDisposablePausable);
+    PausableDisposableManager collection = create(mCheckedDisposablePausable);
 
     assertThat(collection.flushDisposed()).isFalse();
 
@@ -74,7 +74,7 @@ public class PausableManagersTest {
 
   @Test
   public void testStandaloneDispose() throws NoSuchFieldException, IllegalAccessException {
-    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.dispose();
 

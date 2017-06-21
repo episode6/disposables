@@ -16,8 +16,8 @@ import java.util.concurrent.Executor;
  */
 public class Pausables {
 
-  public static PausableManager newDisposableManager() {
-    return new BasicPausableManager();
+  public static PausableDisposableManager newDisposableManager() {
+    return new BasicPausableDisposableManager();
   }
 
   public static <T> CheckedDisposablePausable weak(T instance, Pauser<T> pauser) {
@@ -78,8 +78,9 @@ public class Pausables {
     }
   }
 
-  private static class BasicPausableManager extends AbstractDelegateDisposable<List<Object>> implements PausableManager {
-    BasicPausableManager() {
+  private static class BasicPausableDisposableManager extends AbstractDelegateDisposable<List<Object>> implements
+      PausableDisposableManager {
+    BasicPausableDisposableManager() {
       super(new LinkedList<Object>());
     }
 

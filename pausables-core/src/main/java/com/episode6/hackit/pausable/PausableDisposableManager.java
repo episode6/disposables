@@ -5,7 +5,7 @@ import com.episode6.hackit.disposable.DisposableManager;
 /**
  * Interface for a manager of a collection of pausables.
  */
-public interface PausableManager extends DisposableManager, Pausable {
+public interface PausableDisposableManager extends DisposableManager, Pausable {
 
   /**
    * Add a pausable to this manager, instructing the manager to pass down its calls
