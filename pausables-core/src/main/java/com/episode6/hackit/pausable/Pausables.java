@@ -1,12 +1,11 @@
 package com.episode6.hackit.pausable;
 
-import com.episode6.hackit.disposable.AbstractDelegateDisposable;
-import com.episode6.hackit.disposable.Disposable;
-import com.episode6.hackit.disposable.Disposer;
-import com.episode6.hackit.disposable.MaybeDisposables;
+import com.episode6.hackit.disposable.*;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -15,6 +14,10 @@ import java.util.concurrent.Executor;
  * Utility class containing static methods to create pausables
  */
 public class Pausables {
+
+  public static PausableManager newManager(Pausable... pausables) {
+    return new BasicPausableManager(pausables.length == 0 ? null : Arrays.asList(pausables));
+  }
 
   /**
    * Create a new {@link PausableDisposableManager} that manages both {@link Pausable}s
@@ -83,38 +86,25 @@ public class Pausables {
     }
   }
 
-  private static class BasicPausableDisposableManager extends AbstractDelegateDisposable<List<Object>> implements
-      PausableDisposableManager {
-    BasicPausableDisposableManager() {
-      super(new LinkedList<Object>());
+  private static class BasicPausableManager extends AbstractDelegateDisposable<List<Pausable>> implements PausableManager, HasDisposables {
+
+    public BasicPausableManager(@Nullable Collection<Pausable> prefill) {
+      super(prefill == null ? new LinkedList<Pausable>() : new LinkedList<Pausable>(prefill));
     }
 
     @Override
-    public void pause() {
-      synchronized (this) {
-        MaybePausables.pauseList(getDelegateOrThrow());
-      }
+    public synchronized void addPausable(Pausable pausable) {
+      getDelegateOrThrow().add(pausable);
     }
 
     @Override
-    public void resume() {
-      synchronized (this) {
-        MaybePausables.resumeList(getDelegateOrThrow());
-      }
+    public synchronized void pause() {
+      MaybePausables.pauseList(getDelegateOrThrow());
     }
 
     @Override
-    public void addPausable(Pausable pausable) {
-      synchronized (this) {
-        getDelegateOrThrow().add(pausable);
-      }
-    }
-
-    @Override
-    public void addDisposable(Disposable disposable) {
-      synchronized (this) {
-        getDelegateOrThrow().add(disposable);
-      }
+    public synchronized void resume() {
+      MaybePausables.resumeList(getDelegateOrThrow());
     }
 
     @Override
@@ -131,7 +121,49 @@ public class Pausables {
 
     @Override
     public void dispose() {
-      MaybeDisposables.disposeList(markDisposed());
+      markDisposed();
+    }
+  }
+
+  private static class BasicPausableDisposableManager implements PausableDisposableManager {
+    private final DisposableManager mDisposableManager = Disposables.newManager();
+    private final BasicPausableManager mPausableManager = new BasicPausableManager(null);
+
+    @Override
+    public synchronized void addDisposable(Disposable disposable) {
+      mDisposableManager.addDisposable(disposable);
+      if (disposable instanceof Pausable) {
+        mPausableManager.addPausable((Pausable) disposable);
+      }
+    }
+
+    @Override
+    public synchronized void addPausable(Pausable pausable) {
+      mPausableManager.addPausable(pausable);
+      if (pausable instanceof Disposable) {
+        mDisposableManager.addDisposable((Disposable) pausable);
+      }
+    }
+
+    @Override
+    public synchronized void pause() {
+      mPausableManager.pause();
+    }
+
+    @Override
+    public synchronized void resume() {
+      mPausableManager.resume();
+    }
+
+    @Override
+    public synchronized boolean flushDisposed() {
+      return mPausableManager.flushDisposed() && mDisposableManager.flushDisposed();
+    }
+
+    @Override
+    public synchronized void dispose() {
+      mPausableManager.dispose();
+      mDisposableManager.dispose();
     }
   }
 
