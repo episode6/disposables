@@ -6,12 +6,12 @@ An experimental java library for dealing with objects that need to be disposed.
 repositories { maven { url "https://oss.sonatype.org/content/repositories/snapshots/" } }
 dependencies {
     // core modules
-    compile 'com.episode6.hackit.disposable:disposables-core:0.0.5-SNAPSHOT'
-    compile 'com.episode6.hackit.disposable:pausables-core:0.0.5-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposables-core:0.0.6-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:pausables-core:0.0.6-SNAPSHOT'
 
     // add-ons
-    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.5-SNAPSHOT'
-    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.5-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.6-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.6-SNAPSHOT'
 }
 ```
 
