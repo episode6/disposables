@@ -1,8 +1,6 @@
 package com.episode6.hackit.pausable;
 
 import com.episode6.hackit.disposable.AbstractDelegateDisposable;
-import com.episode6.hackit.disposable.DisposableManager;
-import com.episode6.hackit.disposable.Disposables;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -28,9 +26,17 @@ public class PausableManagersTest {
   @Mock DisposablePausable mDisposablePausable;
   @Mock CheckedDisposablePausable mCheckedDisposablePausable;
 
+  static PausableManager create(Pausable... pausables) {
+    PausableManager manager = Pausables.newDisposableManager();
+    for (Pausable p : pausables) {
+      manager.addPausable(p);
+    }
+    return manager;
+  }
+
   @Test
   public void testStandalonePause() {
-    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
 
@@ -43,7 +49,7 @@ public class PausableManagersTest {
 
   @Test
   public void testStandaloneResume() {
-    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
 
@@ -57,7 +63,7 @@ public class PausableManagersTest {
   @Test
   public void testStandaloneFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    PausableManager collection = Pausables.newStandaloneManager(mCheckedDisposablePausable);
+    PausableManager collection = create(mCheckedDisposablePausable);
 
     assertThat(collection.flushDisposed()).isFalse();
 
@@ -68,7 +74,7 @@ public class PausableManagersTest {
 
   @Test
   public void testStandaloneDispose() throws NoSuchFieldException, IllegalAccessException {
-    PausableManager collection = Pausables.newStandaloneManager(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.dispose();
 
@@ -76,63 +82,6 @@ public class PausableManagersTest {
     inOrder.verify(mCheckedDisposablePausable).dispose();
     inOrder.verify(mDisposablePausable).dispose();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    assertThat(getInternalList(collection)).isNull();
-  }
-
-  @Test
-  public void testConnectedPause() {
-    DisposableManager root = Disposables.newManager();
-    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
-
-    collection.pause();
-
-    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    inOrder.verify(mCheckedDisposablePausable).pause();
-    inOrder.verify(mDisposablePausable).pause();
-    inOrder.verify(mPausable).pause();
-    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-  }
-
-  @Test
-  public void testConnectedResume() {
-    DisposableManager root = Disposables.newManager();
-    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
-
-    collection.resume();
-
-    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    inOrder.verify(mPausable).resume();
-    inOrder.verify(mDisposablePausable).resume();
-    inOrder.verify(mCheckedDisposablePausable).resume();
-    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-  }
-
-  @Test
-  public void testConnectedFlush() throws NoSuchFieldException, IllegalAccessException {
-    when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    DisposableManager root = Disposables.newManager();
-    PausableManager collection = Pausables.newConnectedManager(root, mCheckedDisposablePausable);
-
-    assertThat(root.flushDisposed()).isFalse();
-
-    verify(mCheckedDisposablePausable, times(2)).isDisposed();
-    verifyNoMoreInteractions(mCheckedDisposablePausable);
-    assertThat(getInternalList(root)).containsOnly(collection);
-    assertThat(getInternalList(collection)).isEmpty();
-  }
-
-  @Test
-  public void testConnectedDispose() throws NoSuchFieldException, IllegalAccessException {
-    DisposableManager root = Disposables.newManager();
-    PausableManager collection = Pausables.newConnectedManager(root, mPausable, mDisposablePausable, mCheckedDisposablePausable);
-
-    root.dispose();
-
-    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    inOrder.verify(mCheckedDisposablePausable).dispose();
-    inOrder.verify(mDisposablePausable).dispose();
-    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    assertThat(getInternalList(root)).isNull();
     assertThat(getInternalList(collection)).isNull();
   }
 
