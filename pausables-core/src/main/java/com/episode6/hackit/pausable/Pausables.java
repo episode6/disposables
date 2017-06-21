@@ -16,6 +16,11 @@ import java.util.concurrent.Executor;
  */
 public class Pausables {
 
+  /**
+   * Create a new {@link PausableDisposableManager} that manages both {@link Pausable}s
+   * and {@link Disposable}s.
+   * @return A new (and empty) {@link PausableDisposableManager}
+   */
   public static PausableDisposableManager newDisposableManager() {
     return new BasicPausableDisposableManager();
   }
