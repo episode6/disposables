@@ -12,5 +12,5 @@ public interface DisposableManager extends HasDisposables {
    * the new disposable.
    * @param disposable The disposable to add.
    */
-  void add(Disposable disposable);
+  void addDisposable(Disposable disposable);
 }
