@@ -108,7 +108,7 @@ public class Disposables {
     }
 
     @Override
-    public void add(Disposable disposable) {
+    public void addDisposable(Disposable disposable) {
       synchronized (this) {
         getDelegateOrThrow().add(disposable);
       }

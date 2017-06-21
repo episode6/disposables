@@ -51,7 +51,7 @@ public class Pausables {
    */
   public static PausableManager newConnectedManager(DisposableManager disposableManager, Pausable... pausables) {
     ConnectedPausableManager pausableManager = new ConnectedPausableManager(disposableManager);
-    disposableManager.add(pausableManager);
+    disposableManager.addDisposable(pausableManager);
     if (pausables.length > 0) {
       pausableManager.addAll(pausables);
     }
@@ -181,7 +181,7 @@ public class Pausables {
       for (Pausable p : pausables) {
         list.add(p);
         if (p instanceof Disposable) {
-          mDisposableManager.add((Disposable) p);
+          mDisposableManager.addDisposable((Disposable) p);
         }
       }
     }
@@ -191,7 +191,7 @@ public class Pausables {
       synchronized (this) {
         getDelegateOrThrow().add(pausable);
         if (pausable instanceof Disposable) {
-          mDisposableManager.add((Disposable) pausable);
+          mDisposableManager.addDisposable((Disposable) pausable);
         }
       }
     }
