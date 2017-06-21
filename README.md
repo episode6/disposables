@@ -75,14 +75,14 @@ public class MyActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     mSqlConnection = SQL.openDb(/* db params */);
-    mDisposables.add(new Disposable() {
+    mDisposables.addDisposable(new Disposable() {
         public void dispose() {
             mSqlConnection.close();
         }
     });
 
     final myService = bindService(MyService.class);
-    mDisposables.add(new Disposable() {
+    mDisposables.addDisposable(new Disposable() {
         public void dispose() {
             myService.unbind();
         }
@@ -90,7 +90,7 @@ public class MyActivity extends Activity {
 
     final Service.Listener serviceListener = new Service.Listener() {/* listener impl */};
     myService.registerListener(serviceListener);
-    mDisposables.add(new Disposable() {
+    mDisposables.addDisposable(new Disposable() {
         public void dispose() {
             myService.unregisterListener(serviceListener);
         }
@@ -141,14 +141,14 @@ Then our activity looks more like this...
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     mSqlConnection = SQL.openDb(/* db params */);
-    mDisposables.add(MoreDisposables.forSqlConnection(mSqlConnection));
+    mDisposables.addDisposable(MoreDisposables.forSqlConnection(mSqlConnection));
 
     myService = bindService(MyService.class);
-    mDisposables.add(MoreDisposables.forUnbindService(myService));
+    mDisposables.addDisposable(MoreDisposables.forUnbindService(myService));
 
     Service.Listener serviceListener = new Service.Listener() {/* listener impl */};
     myService.registerListener(serviceListener);
-    mDisposables.add(MoreDisposables.forUnregisterListener(service, serviceListener));
+    mDisposables.addDisposable(MoreDisposables.forUnregisterListener(service, serviceListener));
   }
 
   @Override
@@ -178,7 +178,7 @@ public void onButtonClick() {
   Dialog dialog = new CustomInfoDialog();
 
   // add disposable for dialog
-  mDisposables.add(dialogDisposable(dialog);
+  mDisposables.addDisposable(dialogDisposable(dialog);
 
   dialog.show();
 }
@@ -220,18 +220,19 @@ public interface Pausable {
   void resume();
 }
 ```
-Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableManager also implements `HasDisposables`, so it acts similarly to DisposableManager and will flush / dispose of any pausables that happen to implement `Disposable`.
+Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableDisposableManager` that your component owns. When your component is paused or resumed, just call `PausableDisposableManager.pause()` or `PausableDisposableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableDisposableManager implements and replaces your component's `DisposableManager`.
 
-To create a PausableManager there are two options provided...
+Create a new PausableDisposableManager via the `Pausables` utility class.
 ```java
-  final PausableManager mPausables = Pausables.newStandaloneManager();
+  final PausableDisposableManager mPausables = Pausables.newDisposableManager();
 ```
-Or if you're pairing Pausables with Disposables
+Add Pausables and Disposables to it
 ```java
-  final DisposableManager mDisposables = Disposables.newManager();
-  final PausableManager mPausables = Pausables.newConnectedManager(mDisposables);
+// in both cases the added object will be both paused & disposed
+// if it happens to implement both interfaces
+mPausables.addPausable(pausable);
+mPausables.addDisposable(disposable);
 ```
-The reason we use a connected PausableManager is to ensure all our Pausables and Disposables are disposed of in the correct order regardless of which collection they belong to. When using a connected PausableManager, you **do not** need to call dispose() or flushDisposed() directly on it. Calls to the DisposableManager will be properly propogated.
 
 ### Disposable Futures
 The `disposable-futures` module adds support for `DisposableFuture<V>`, an extension of [guava](https://github.com/google/guava)'s `ListenableFuture<V>`. It is designed to prevent unwanted callbacks and memory leaks from occurring after the end of your component's lifecycle.
@@ -254,7 +255,7 @@ public class MyActivity extends Activity {
     mUiExecutor = AndroidExecutors.uiThreadExecutor();
 
     Service myService = bindService(MyService.class);
-    mDisposables.add(MoreDisposables.forUnbindService(myService));
+    mDisposables.addDisposable(MoreDisposables.forUnbindService(myService));
 
     // Fetch api data from myService and add a callback for it.
     ListenableFuture<SomeApiData> apiDataFuture = myService.getApiData();
@@ -294,7 +295,7 @@ public class MyActivity extends Activity {
     mUiExecutor = AndroidExecutors.uiThreadExecutor();
 
     Service myService = bindService(MyService.class);
-    mDisposables.add(MoreDisposables.forUnbindService(myService));
+    mDisposables.addDisposable(MoreDisposables.forUnbindService(myService));
 
     // wrap with a DisposableFuture before adding callbacks to it.
     DisposableFuture<SomeApiData> disposableFuture = DisposableFutures.wrap(myService.getApiData());
@@ -315,7 +316,7 @@ public class MyActivity extends Activity {
 
     // Lastly, add the DisposableFuture to your DisposableManager.
     // Only do this once you've finished adding callbacks.
-    mDisposables.add(disposableFuture);
+    mDisposables.addDisposable(disposableFuture);
   }
 
   @Override
@@ -330,7 +331,7 @@ It's important to note that we added the DisposableFuture to DisposableManager *
 
 Since the above example of wrapping a ListenableFuture, adding a callback, and registering the disposable can be very common, we provide the convenience method `DisposableFutures.addCallback(ListenableFuture, FutureCallback, Executor)` that returns a Disposable, so that all 3 tasks can be accomplished in one call.
 ```java
-mDisposables.add(
+mDisposables.addDisposable(
     DisposableFutures.addCallback(
         myService.getApiData(),
         new FutureCallback<SomeApiData> {
@@ -343,11 +344,7 @@ Since all our examples have involved an android activity, there is one more opti
 ```java
 public class MyActivity extends Activity {
 
-  private final DisposableManager mDisposables = Disposables.newManager();
-
-  // note: PausableManager is kind of pointless in this example since we only have
-  // a single Pausable to manage, but we leave it in as a usage example.
-  private final PausableManager mPausables = Pausables.newConnectedManager(mDisposables);
+  private final PausableDisposableManager mDisposables = Pausables.newDisposableManager();
 
   private PausableExecutor mUiExecutor;
 
@@ -357,12 +354,12 @@ public class MyActivity extends Activity {
     // A queuing pausable executor will collect a list of runnables while paused
     // and fire them upon resume
     mUiExecutor = Pausables.queuingExecutor(AndroidExecutors.uiThreadExecutor());
-    mPausables.add(mUiExecutor);
+    mDisposables.addPausable(mUiExecutor);
 
     Service myService = bindService(MyService.class);
-    mDisposables.add(MoreDisposables.forUnbindService(myService));
+    mDisposables.addDisposable(MoreDisposables.forUnbindService(myService));
 
-    mDisposables.add(
+    mDisposables.addDisposable(
         DisposableFutures.addCallback(
             myService.getApiData(),
             new FutureCallback<SomeApiData> {
@@ -379,12 +376,12 @@ public class MyActivity extends Activity {
 
   @Override
   protected void onPause() {
-    mPausables.pause();
+    mDisposables.pause();
   }
 
   @Override
   protected void onResume() {
-    mPausables.resume();
+    mDisposables.resume();
   }
 
   @Override

@@ -51,7 +51,7 @@ public class DisposableManagerTest {
     DisposableManager collection = create(mDisposable1);
 
     collection.dispose();
-    collection.add(mCheckedDisposable2);
+    collection.addDisposable(mCheckedDisposable2);
   }
 
   @Test
@@ -120,10 +120,10 @@ public class DisposableManagerTest {
   @Test
   public void testDisposeInverseOrder() {
     DisposableManager collection = create();
-    collection.add(mDisposable1);
-    collection.add(mDisposable2);
-    collection.add(mCheckedDisposable1);
-    collection.add(mCheckedDisposable2);
+    collection.addDisposable(mDisposable1);
+    collection.addDisposable(mDisposable2);
+    collection.addDisposable(mCheckedDisposable1);
+    collection.addDisposable(mCheckedDisposable2);
 
     collection.dispose();
 
