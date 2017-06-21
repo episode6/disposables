@@ -15,5 +15,5 @@ public interface PausableManager extends HasDisposables, Pausable {
    * to {@link #pause()}, {@link #resume()} and {@link #dispose()} to the new pausable.
    * @param pausable The pausable to add,
    */
-  void add(Pausable pausable);
+  void addPausable(Pausable pausable);
 }

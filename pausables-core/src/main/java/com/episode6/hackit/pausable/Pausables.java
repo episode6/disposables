@@ -155,7 +155,7 @@ public class Pausables {
     }
 
     @Override
-    public void add(Pausable pausable) {
+    public void addPausable(Pausable pausable) {
       synchronized (this) {
         getDelegateOrThrow().add(pausable);
       }
@@ -187,7 +187,7 @@ public class Pausables {
     }
 
     @Override
-    public void add(Pausable pausable) {
+    public void addPausable(Pausable pausable) {
       synchronized (this) {
         getDelegateOrThrow().add(pausable);
         if (pausable instanceof Disposable) {
