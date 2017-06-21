@@ -26,7 +26,11 @@ public class PausableDisposableManagersTest {
   @Mock DisposablePausable mDisposablePausable;
   @Mock CheckedDisposablePausable mCheckedDisposablePausable;
 
-  static PausableDisposableManager create(Pausable... pausables) {
+  static PausableManager create(Pausable... pausables) {
+    return Pausables.newManager(pausables);
+  }
+
+  static PausableDisposableManager createDisposable(Pausable... pausables) {
     PausableDisposableManager manager = Pausables.newDisposableManager();
     for (Pausable p : pausables) {
       manager.addPausable(p);
@@ -36,7 +40,7 @@ public class PausableDisposableManagersTest {
 
   @Test
   public void testStandalonePause() {
-    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.pause();
 
@@ -49,7 +53,7 @@ public class PausableDisposableManagersTest {
 
   @Test
   public void testStandaloneResume() {
-    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    PausableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.resume();
 
@@ -61,20 +65,46 @@ public class PausableDisposableManagersTest {
   }
 
   @Test
-  public void testStandaloneFlush() throws NoSuchFieldException, IllegalAccessException {
+  public void testDisposablePause() {
+    PausableDisposableManager collection = createDisposable(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+
+    collection.pause();
+
+    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    inOrder.verify(mCheckedDisposablePausable).pause();
+    inOrder.verify(mDisposablePausable).pause();
+    inOrder.verify(mPausable).pause();
+    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+  }
+
+  @Test
+  public void testDisposableResume() {
+    PausableDisposableManager collection = createDisposable(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+
+    collection.resume();
+
+    InOrder inOrder = Mockito.inOrder(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+    inOrder.verify(mPausable).resume();
+    inOrder.verify(mDisposablePausable).resume();
+    inOrder.verify(mCheckedDisposablePausable).resume();
+    verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+  }
+
+  @Test
+  public void testDisposableFlush() throws NoSuchFieldException, IllegalAccessException {
     when(mCheckedDisposablePausable.isDisposed()).thenReturn(true);
-    PausableDisposableManager collection = create(mCheckedDisposablePausable);
+    PausableDisposableManager collection = createDisposable(mCheckedDisposablePausable);
 
     assertThat(collection.flushDisposed()).isFalse();
 
     verify(mCheckedDisposablePausable).isDisposed();
     verifyNoMoreInteractions(mCheckedDisposablePausable);
-    assertThat(getInternalList(collection)).isEmpty();
+    assertThat(getPausableList(collection)).isEmpty();
   }
 
   @Test
-  public void testStandaloneDispose() throws NoSuchFieldException, IllegalAccessException {
-    PausableDisposableManager collection = create(mPausable, mDisposablePausable, mCheckedDisposablePausable);
+  public void testDisposableDispose() throws NoSuchFieldException, IllegalAccessException {
+    PausableDisposableManager collection = createDisposable(mPausable, mDisposablePausable, mCheckedDisposablePausable);
 
     collection.dispose();
 
@@ -82,14 +112,23 @@ public class PausableDisposableManagersTest {
     inOrder.verify(mCheckedDisposablePausable).dispose();
     inOrder.verify(mDisposablePausable).dispose();
     verifyNoMoreInteractions(mPausable, mDisposablePausable, mCheckedDisposablePausable);
-    assertThat(getInternalList(collection)).isNull();
+    assertThat(getPausableList(collection)).isNull();
   }
 
   @SuppressWarnings("unchecked")
-  private static List<Pausable> getInternalList(Object collection)
+  private static List<Pausable> getPausableList(PausableDisposableManager collection)
       throws NoSuchFieldException, IllegalAccessException {
-    Field field = AbstractDelegateDisposable.class.getDeclaredField("mDelegate");
-    field.setAccessible(true);
-    return (List<Pausable>) field.get(collection);
+    Field pausableManagerField = collection.getClass().getDeclaredField("mPausableManager");
+    pausableManagerField.setAccessible(true);
+    PausableManager pausableManager = (PausableManager) pausableManagerField.get(collection);
+    return getInternalList(pausableManager);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Pausable> getInternalList(PausableManager pausableManager)
+      throws NoSuchFieldException, IllegalAccessException {
+    Field listField = AbstractDelegateDisposable.class.getDeclaredField("mDelegate");
+    listField.setAccessible(true);
+    return (List<Pausable>) listField.get(pausableManager);
   }
 }

@@ -6,12 +6,12 @@ An experimental java library for dealing with objects that need to be disposed.
 repositories { jcenter() }
 dependencies {
     // core modules
-    compile 'com.episode6.hackit.disposable:disposables-core:0.0.4'
-    compile 'com.episode6.hackit.disposable:pausables-core:0.0.4'
+    compile 'com.episode6.hackit.disposable:disposables-core:0.0.5'
+    compile 'com.episode6.hackit.disposable:pausables-core:0.0.5'
 
     // add-ons
-    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.4'
-    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.4'
+    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.5'
+    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.5'
 }
 ```
 
@@ -219,7 +219,7 @@ public interface Pausable {
   void resume();
 }
 ```
-Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableDisposableManager` that your component owns. When your component is paused or resumed, just call `PausableDisposableManager.pause()` or `PausableDisposableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableDisposableManager implements and replaces your component's `DisposableManager`.
+Just like  disposables, you create Pausables at the same time you create the object-to-be-paused, and add them to a `PausableManager` or a `PausableDisposableManager` that your component owns. When your component is paused or resumed, just call `PausableManager.pause()` or `PausableManager.resume()` respectively and the call will be passed down to all your pausables in correct order. The PausableDisposableManager implements and replaces your component's `DisposableManager`.
 
 Create a new PausableDisposableManager via the `Pausables` utility class.
 ```java
