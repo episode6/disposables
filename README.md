@@ -228,8 +228,8 @@ Create a new PausableDisposableManager via the `Pausables` utility class.
 ```
 Add Pausables and Disposables to it
 ```java
-// in both cases added object will be both paused & disposed if it
-// happens to implement both interfaces
+// in both cases the added object will be both paused & disposed
+// if it happens to implement both interfaces
 mPausables.addPausable(pausable);
 mPausables.addDisposable(disposable);
 ```
