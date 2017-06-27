@@ -10,6 +10,9 @@ import com.episode6.hackit.disposable.CheckedDisposer;
 import com.episode6.hackit.disposable.Disposable;
 import com.episode6.hackit.disposable.Disposables;
 
+/**
+ * Utility methods to create android-specific disposables.
+ */
 public class AndroidDisposables {
 
   @SuppressWarnings("deprecation")
