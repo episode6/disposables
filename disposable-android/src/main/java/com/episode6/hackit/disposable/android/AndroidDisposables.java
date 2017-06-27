@@ -1,10 +1,13 @@
 package com.episode6.hackit.disposable.android;
 
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.os.Build;
 import android.os.HandlerThread;
 import com.episode6.hackit.disposable.CheckedDisposable;
 import com.episode6.hackit.disposable.CheckedDisposer;
+import com.episode6.hackit.disposable.Disposable;
 import com.episode6.hackit.disposable.Disposables;
 
 public class AndroidDisposables {
@@ -42,5 +45,14 @@ public class AndroidDisposables {
         instance.dismiss();
       }
     });
+  }
+
+  public static Disposable forBroadcastReceiver(final Context context, final BroadcastReceiver broadcastReceiver) {
+    return new Disposable() {
+      @Override
+      public void dispose() {
+        context.unregisterReceiver(broadcastReceiver);
+      }
+    };
   }
 }
