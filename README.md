@@ -13,6 +13,7 @@ dependencies {
     compile 'com.episode6.hackit.disposable:disposable-futures:0.0.7-SNAPSHOT'
     compile 'com.episode6.hackit.disposable:disposable-android:0.0.7-SNAPSHOT'
     compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.7-SNAPSHOT'
+    compile 'com.episode6.hackit.disposable:pausable-android:0.0.7-SNAPSHOT'
 }
 ```
 
