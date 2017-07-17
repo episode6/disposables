@@ -278,4 +278,23 @@ public class DisposablesTest {
     // mRunnableWithDispose explicitly not called
     verifyNoMoreInteractions(mRunnableWithDispose);
   }
+
+  @Test
+  public void testCheckedDisposableWrap() {
+    CheckedDisposable checkedDisposable = Disposables.checked(mMockDisposable);
+
+    assertThat(checkedDisposable.isDisposed()).isFalse();
+    checkedDisposable.dispose();
+    verify(mMockDisposable).dispose();
+    assertThat(checkedDisposable.isDisposed()).isTrue();
+    checkedDisposable.dispose();
+    verifyNoMoreInteractions(mMockDisposable);
+  }
+
+  @Test
+  public void testCheckedDisposableDirectReturn() {
+    CheckedDisposable checkedDisposable = Disposables.checked(mMockCheckedDisposable);
+
+    assertThat(checkedDisposable).isEqualTo(mMockCheckedDisposable);
+  }
 }

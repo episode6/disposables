@@ -1,10 +1,13 @@
 package com.episode6.hackit.disposable.android;
 
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.os.Build;
 import android.os.HandlerThread;
 import android.os.Looper;
 import com.episode6.hackit.disposable.CheckedDisposable;
+import com.episode6.hackit.disposable.Disposable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -23,6 +26,8 @@ public class AndroidDisposablesTest {
   @Mock HandlerThread mHandlerThread;
   @Mock Looper mLooper;
   @Mock Dialog mDialog;
+  @Mock Context mContext;
+  @Mock BroadcastReceiver mBroadcastReceiver;
 
   @Test
   public void testHandlerThreadNotDisposed() {
@@ -87,6 +92,15 @@ public class AndroidDisposablesTest {
 
     verify(mDialog).isShowing();
     verify(mDialog).dismiss();
+  }
+
+  @Test
+  public void testBroadcastReceiver() {
+    Disposable disposable = AndroidDisposables.forBroadcastReceiver(mContext, mBroadcastReceiver);
+
+    disposable.dispose();
+
+    verify(mContext).unregisterReceiver(mBroadcastReceiver);
   }
 
   private static void setSdkVersion(int sdkVersion) {

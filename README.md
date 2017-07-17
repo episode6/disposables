@@ -6,13 +6,15 @@ An experimental java library for dealing with objects that need to be disposed.
 repositories { jcenter() }
 dependencies {
     // core modules
-    compile 'com.episode6.hackit.disposable:disposables-core:0.0.6'
-    compile 'com.episode6.hackit.disposable:pausables-core:0.0.6'
+    compile 'com.episode6.hackit.disposable:disposables-core:0.0.7'
+    compile 'com.episode6.hackit.disposable:pausables-core:0.0.7'
 
     // add-ons
-    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.6'
-    compile 'com.episode6.hackit.disposable:disposable-android:0.0.6'
-    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.6'
+    compile 'com.episode6.hackit.disposable:disposable-futures:0.0.7'
+    compile 'com.episode6.hackit.disposable:disposable-rx:0.0.7'
+    compile 'com.episode6.hackit.disposable:disposable-android:0.0.7'
+    compile 'com.episode6.hackit.disposable:disposable-butterknife:0.0.7'
+    compile 'com.episode6.hackit.disposable:pausable-android:0.0.7'
 }
 ```
 
