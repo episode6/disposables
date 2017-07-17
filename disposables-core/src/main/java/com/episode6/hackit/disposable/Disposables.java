@@ -22,6 +22,21 @@ public class Disposables {
   }
 
   /**
+   * Create a {@link CheckedDisposable} from a simple {@link Disposable}. If the provided
+   * disposable already implements {@link CheckedDisposable}, it will be returned directly.
+   * Otherwise it will be wrapped in a CheckedDisposable and the underlying dispose method is
+   * guaranteed to be called only once.
+   * @param disposable The {@link Disposable} to wrap
+   * @return A {@link CheckedDisposable} wrapping the supplied disposable.
+   */
+  public static CheckedDisposable checked(Disposable disposable) {
+    if (disposable instanceof CheckedDisposable) {
+      return (CheckedDisposable) disposable;
+    }
+    return new SimpleCheckedDisposable(disposable);
+  }
+
+  /**
    * Create a {@link CheckedDisposable} that holds a {@link WeakReference} to the supplied instance
    * instead of a strong one. Calls to {@link CheckedDisposable#isDisposed()} will check to see if
    * the reference still exists. Calls to {@link Disposable#dispose()} will clear the weak reference
@@ -129,6 +144,23 @@ public class Disposables {
     @Override
     public void dispose() {
       MaybeDisposables.disposeList(markDisposed());
+    }
+  }
+
+  private static class SimpleCheckedDisposable extends AbstractDelegateDisposable<Disposable> implements CheckedDisposable {
+
+    public SimpleCheckedDisposable(Disposable delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void dispose() {
+      MaybeDisposables.dispose(markDisposed());
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return MaybeDisposables.isDisposed(getDelegateOrNull());
     }
   }
  }
