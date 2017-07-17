@@ -20,7 +20,7 @@ allprojects {
   }
 
   group = 'com.episode6.hackit.disposable'
-  version = '0.0.7-SNAPSHOT'
+  version = '0.0.7'
 }
 
 task clean(type: Delete) {
