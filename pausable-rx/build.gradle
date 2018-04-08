@@ -1,0 +1,18 @@
+
+apply plugin: 'java'
+apply plugin: 'com.episode6.hackit.deployable.jar'
+apply plugin: 'com.episode6.hackit.gdmc'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+dependencies {
+  compile project(':pausables-core')
+  compile 'com.google.code.findbugs:jsr305'
+  compile 'io.reactivex.rxjava2:rxjava'
+  
+  testCompile 'junit:junit'
+  testCompile 'org.mockito:mockito-core'
+  testCompile 'org.easytesting:fest-assert-core'
+}
+
