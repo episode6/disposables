@@ -1,1 +1,1 @@
-include ':disposables-core', ':disposable-futures', ':pausables-core', ':disposable-butterknife', ':disposable-android', ':pausable-android', ':disposable-rx'
+include ':disposables-core', ':disposable-futures', ':pausables-core', ':disposable-butterknife', ':disposable-android', ':pausable-android', ':disposable-rx', ':pausable-rx'
